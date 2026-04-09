@@ -1,0 +1,9 @@
+torch
+torchvision
+torchaudio
+funasr
+modelscope
+librosa
+numpy
+pandas
+soundfile
