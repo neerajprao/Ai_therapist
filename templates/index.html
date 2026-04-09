@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulSync | AI Voice Therapist</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; transition: background-color 0.5s ease; }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .pulse-active {
+            animation: pulse-red 2s infinite;
+            background-color: #ef4444 !important;
+        }
+
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Smooth transition for theme colors */
+        .theme-transition {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-200 min-h-screen">
+
+    <div class="max-w-3xl mx-auto px-6 py-16">
+        <header class="text-center mb-16">
+            <h1 id="mainTitle" class="text-5xl font-extrabold bg-gradient-to-r from-indigo-400 via-blue-400 to-emerald-400 bg-clip-text text-transparent tracking-tight transition-all duration-1000">
+                SoulSync
+            </h1>
+            <p class="text-slate-500 mt-4 text-lg font-light tracking-wide">Private. Local. Empathetic.</p>
+        </header>
+
+        <main class="space-y-8">
+            <div class="glass rounded-[2rem] p-10 text-center transition-all duration-500 shadow-2xl">
+                <button id="recordBtn" class="w-28 h-28 rounded-full bg-slate-800 hover:bg-slate-700 flex items-center justify-center mx-auto transition-all duration-300 group shadow-xl border border-slate-700">
+                    <svg id="micIcon" class="w-12 h-12 text-blue-400 group-hover:text-blue-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-20a3 3 0 00-3 3v10a3 3 0 006 0V7a3 3 0 00-3-3z"></path>
+                    </svg>
+                </button>
+                <div id="status" class="mt-8 text-xs font-bold text-slate-500 tracking-[0.2em] uppercase">Ready to Listen</div>
+            </div>
+
+            <div id="resultArea" class="hidden space-y-6 fade-in">
+                <div id="emotionCard" class="glass rounded-2xl p-6 border-l-4 border-indigo-500 shadow-lg theme-transition">
+                    <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-3">Live Analysis</h3>
+                    <div class="flex flex-col space-y-2">
+                        <div class="flex items-center space-x-3">
+                            <span class="text-sm text-slate-400 italic" id="userSaid"></span>
+                        </div>
+                        <div class="pt-2">
+                            <span id="emotion" class="px-3 py-1 text-xs font-bold rounded-full border theme-transition"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="aiCard" class="glass rounded-3xl p-8 shadow-inner border border-white/5 theme-transition">
+                    <div class="flex items-center space-x-2 mb-6">
+                        <div id="aiPulse" class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                        <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Therapeutic Response</h3>
+                    </div>
+                    <p id="aiResponse" class="text-xl leading-relaxed text-slate-200 font-light"></p>
+                </div>
+            </div>
+        </main>
+
+        <footer class="mt-20 text-center">
+            <p class="text-[10px] text-slate-800 uppercase tracking-widest">M3 Pro Neural Architecture</p>
+        </footer>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        const recordBtn = document.getElementById('recordBtn');
+        const statusText = document.getElementById('status');
+        const resultArea = document.getElementById('resultArea');
+        const micIcon = document.getElementById('micIcon');
+
+        function updateUITheme(emotion) {
+            const emotionCard = document.getElementById('emotionCard');
+            const emotionTag = document.getElementById('emotion');
+            const aiPulse = document.getElementById('aiPulse');
+            const mainTitle = document.getElementById('mainTitle');
+            
+            // Define Theme Mappings
+            const themes = {
+                'Happy': { border: 'border-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400', tagBorder: 'border-emerald-500/30', gradient: 'from-emerald-400 to-teal-400' },
+                'Sad': { border: 'border-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400', tagBorder: 'border-purple-500/30', gradient: 'from-purple-400 to-indigo-400' },
+                'Angry': { border: 'border-red-500', bg: 'bg-red-500/10', text: 'text-red-400', tagBorder: 'border-red-500/30', gradient: 'from-red-400 to-orange-400' },
+                'Anxious': { border: 'border-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-400', tagBorder: 'border-amber-500/30', gradient: 'from-amber-400 to-yellow-400' },
+                'Neutral': { border: 'border-blue-500', bg: 'bg-blue-500/10', text: 'text-blue-400', tagBorder: 'border-blue-500/30', gradient: 'from-blue-400 to-indigo-400' }
+            };
+
+            // Detect primary emotion
+            let theme = themes['Neutral'];
+            for (const key in themes) {
+                if (emotion.includes(key)) {
+                    theme = themes[key];
+                    break;
+                }
+            }
+
+            // Apply Classes
+            emotionCard.className = `glass rounded-2xl p-6 border-l-4 shadow-lg theme-transition ${theme.border}`;
+            emotionTag.className = `px-3 py-1 text-xs font-bold rounded-full border theme-transition ${theme.bg} ${theme.text} ${theme.tagBorder}`;
+            aiPulse.className = `w-2 h-2 rounded-full animate-pulse ${theme.bg.replace('/10', '')}`; // Match pulse to theme color
+            mainTitle.className = `text-5xl font-extrabold bg-gradient-to-r ${theme.gradient} bg-clip-text text-transparent tracking-tight transition-all duration-1000`;
+        }
+
+        recordBtn.onclick = async () => {
+            if (mediaRecorder && mediaRecorder.state === "recording") {
+                mediaRecorder.stop();
+                stopUI();
+            } else {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+                    mediaRecorder.onstop = uploadAudio;
+                    mediaRecorder.start();
+                    startUI();
+                } catch (err) {
+                    statusText.innerText = "Mic access denied";
+                }
+            }
+        };
+
+        function startUI() {
+            recordBtn.classList.add('pulse-active');
+            micIcon.classList.add('text-white');
+            statusText.innerText = "Listening...";
+            statusText.classList.add('text-red-400');
+        }
+
+        function stopUI() {
+            recordBtn.classList.remove('pulse-active');
+            micIcon.classList.remove('text-white');
+            statusText.innerText = "Analyzing Session...";
+            statusText.classList.remove('text-red-400');
+        }
+
+        async function uploadAudio() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'session.wav');
+
+            try {
+                const response = await fetch('/process_audio', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                updateUITheme(data.detected_emotion);
+                resultArea.classList.remove('hidden');
+                document.getElementById('userSaid').innerText = `"${data.user_said}"`;
+                document.getElementById('emotion').innerText = data.detected_emotion;
+                document.getElementById('aiResponse').innerText = data.ai_response;
+                statusText.innerText = "Ready";
+            } catch (e) {
+                statusText.innerText = "Processing Error";
+            }
+        }
+    </script>
+</body>
+</html>
