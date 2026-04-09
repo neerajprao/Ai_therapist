@@ -1,75 +1,80 @@
 import ollama
+import whisper
 import os
-import json
-import chromadb
-from concurrent.futures import ThreadPoolExecutor
-from transcribe import SpeechToText
-from therapist_bot import TherapistBot
+import re
 
 class TherapistBrain:
     def __init__(self):
-        print("--- Initializing Neural Engines & Vector Vault ---")
-        self.stt = SpeechToText()
-        self.emotion_bot = TherapistBot()
-        self.model = "llama3"
+        # 1. Load Whisper locally on your M3 Pro (Base is fastest)
+        print("Loading Whisper Speech-to-Text...")
+        self.stt_model = whisper.load_model("base")
         
-        # Initialize Vector DB
-        os.makedirs("data/vector_vault", exist_ok=True)
-        self.db_client = chromadb.PersistentClient(path="data/vector_vault")
-        self.collection = self.db_client.get_or_create_collection(name="therapy_sessions")
+        # 2. Set the "Luna" Personality
+        self.model_name = "llama3" # Ensure you have run 'ollama pull llama3'
+        self.system_prompt = (
+            "You are Luna, a deeply empathetic, soft-spoken therapist. "
+            "Your goal is to provide comfort. "
+            "CRITICAL RULES: "
+            "1. NEVER use asterisks or stage directions like *sighs*, *pauses*, or [cries]. "
+            "2. Never describe your own actions. Speak only the words you would say aloud. "
+            "3. Keep responses very brief (1-2 sentences). "
+            "4. Use '...' for a soft pause. "
+            "5. If the user is poetic, be poetic. If they are brief, be brief."
+        )
+        self.chat_history = [{"role": "system", "content": self.system_prompt}]
 
-    def load_history(self):
-        # We now use Vector DB instead of JSON, but keeping this for compatibility
-        return []
-
-    def check_safety(self, text):
-        triggers = ["hurt myself", "suicide", "end my life", "self-harm", "kill myself"]
-        return any(trigger in text.lower() for trigger in triggers)
-
-    def get_relevant_context(self, current_input):
-        try:
-            results = self.collection.query(query_texts=[current_input], n_results=3)
-            return "\n".join(results['documents'][0]) if results['documents'] else ""
-        except:
+    def transcribe_audio(self, audio_path):
+        """Converts user speech to text locally."""
+        if not os.path.exists(audio_path):
             return ""
+        result = self.stt_model.transcribe(audio_path, fp16=False)
+        return result['text'].strip()
+
+    def detect_emotion(self, text):
+        """
+        Simple keyword-based logic for speed. 
+        In 2026, LLMs are fast enough to detect this in the stream.
+        """
+        text = text.lower()
+        if any(word in text for word in ["sad", "empty", "grief", "hurts", "lost", "pulls"]):
+            return "Sad/Depressed"
+        if any(word in text for word in ["scared", "anxious", "worry", "panic"]):
+            return "Anxious"
+        return "Neutral/Calm"
 
     def generate_streaming_response(self, audio_path):
-        # 1. Parallel STT and Emotion
-        with ThreadPoolExecutor() as executor:
-            future_text = executor.submit(self.stt.transcribe, audio_path)
-            future_emotion = executor.submit(self.emotion_bot.analyze_voice, audio_path)
-            transcript = future_text.result()
-            emotion = future_emotion.result()
-
-        # 2. Safety Check
-        if self.check_safety(transcript):
-            yield f"METADATA|{transcript}|{emotion}|"
-            yield "I'm concerned about what you're sharing. Please reach out to a professional immediately."
+        """Process audio -> Text -> Llama-3 Reasoning -> Clean Stream"""
+        
+        # 1. Get user text
+        user_input = self.transcribe_audio(audio_path)
+        if not user_input:
+            yield "I'm listening. Please continue when you're ready."
             return
 
-        # 3. Memory Retrieval
-        past_memories = self.get_relevant_context(transcript)
+        self.chat_history.append({"role": "user", "content": user_input})
         
-        # 4. Stream from Ollama
-        system_prompt = f"You are SoulSync, a therapist. Current Tone: {emotion}. Relevant History: {past_memories}. Instructions: Be brief (3-4 sentences)."
-        
-        # Yield metadata first for the UI
-        yield f"METADATA|{transcript}|{emotion}|"
-
+        # 2. Get LLM response via Ollama
         stream = ollama.chat(
-            model=self.model,
-            messages=[{'role': 'system', 'content': system_prompt}, {'role': 'user', 'content': transcript}],
+            model=self.model_name,
+            messages=self.chat_history,
             stream=True,
         )
 
-        full_response = ""
+        full_reply = ""
         for chunk in stream:
             content = chunk['message']['content']
-            full_response += content
-            yield content
+            
+            # 3. THE CLEANER: Strip out asterisks and stage directions on the fly
+            # This prevents Luna from ever seeing a "*" or "[pause]"
+            clean_content = re.sub(r'\*.*?\*', '', content) # Removes *anything*
+            clean_content = re.sub(r'\[.*?\]', '', clean_content) # Removes [anything]
+            
+            full_reply += clean_content
+            yield clean_content
 
-        # 5. Save to Vector Vault
-        self.collection.add(
-            documents=[f"User: {transcript} | AI: {full_response}"],
-            ids=[f"id_{os.urandom(4).hex()}"]
-        )
+        self.chat_history.append({"role": "assistant", "content": full_reply})
+
+# To test this file independently:
+if __name__ == "__main__":
+    brain = TherapistBrain()
+    print("Brain is online.")
