@@ -70,7 +70,7 @@
             if (mediaRecorder && mediaRecorder.state === "recording") {
                 mediaRecorder.stop();
                 recordBtn.classList.remove('pulse-active');
-                statusText.innerText = "Transcribing...";
+                statusText.innerText = "Processing...";
             } else {
                 const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
                 mediaRecorder = new MediaRecorder(stream);
@@ -95,22 +95,29 @@
                 
                 resultArea.classList.remove('hidden');
                 document.getElementById('aiResponse').innerText = "";
-                let aiFullText = ""; let isMetadata = true; let currentEmotion = "Neutral";
+                let aiFullText = ""; 
+                let isMetadata = true; 
+                let currentEmotion = "Neutral";
 
                 while (true) {
                     const { done, value } = await reader.read();
                     if (done) break;
                     let chunk = decoder.decode(value);
 
+                    // Handle the Metadata header
                     if (isMetadata && chunk.includes("METADATA|")) {
                         const parts = chunk.split('|');
+                        // Update the "Live Analysis" block with user transcript
                         document.getElementById('userSaid').innerText = `"${parts[1]}"`;
                         currentEmotion = parts[2];
                         document.getElementById('emotion').innerText = currentEmotion;
                         updateUITheme(currentEmotion);
+                        
+                        // Remaining part of the chunk is the start of AI text
                         chunk = parts.slice(3).join("");
                         isMetadata = false;
                     }
+                    
                     document.getElementById('aiResponse').innerText += chunk;
                     aiFullText += chunk;
                 }

@@ -18,6 +18,7 @@ brain = TherapistBrain()
 def index():
     session['id'] = str(uuid.uuid4())
     os.makedirs("static/audio", exist_ok=True)
+    os.makedirs("data/raw_audio", exist_ok=True)
     return render_template('index.html')
 
 @app.route('/process_audio_stream', methods=['POST'])
@@ -27,31 +28,39 @@ def process_audio_stream():
     temp_path = f"data/raw_audio/{session['id']}_input.wav"
     audio_file.save(temp_path)
     
+    # Get transcription and emotion immediately
+    user_text = brain.transcribe_audio(temp_path)
+    detected_emotion = brain.detect_emotion(user_text)
+    
     def generate():
-        for chunk in brain.generate_streaming_response(temp_path):
+        # Step 1: Send the Metadata Header
+        # Format: METADATA|Transcript|Emotion|
+        yield f"METADATA|{user_text}|{detected_emotion}|"
+        
+        # Step 2: Stream the LLM response
+        # We pass the pre-transcribed text to the brain to save compute
+        for chunk in brain.generate_streaming_response(temp_path, pre_transcribed_text=user_text):
             yield chunk
+            
     return Response(stream_with_context(generate()), mimetype='text/plain')
 
 @app.route('/get_audio', methods=['POST'])
 def get_audio():
     data = request.json
-    # Clean text: remove asterisks or brackets if Llama-3 slips up
     text = data.get('text', '').replace('*', '').replace('[', '').replace(']', '')
     emotion = data.get('emotion', 'Neutral')
     
-    # --- LUNA EMPATHY ENGINE CONFIG ---
     speed = 1.0
-    temperature = 1.1 # Default 'human' variation
+    temperature = 1.1 
     
     if any(e in emotion for e in ["Sad", "Depressed", "Grief"]):
-        # [sad] lowers pitch, [whispering] adds breathiness, [sigh] is a non-verbal exhale
         prompt = f"[sad] [whispering] [sigh] {text}"
-        speed = 0.82        # Slower for gravity
-        temperature = 1.4   # More emotional variation
+        speed = 0.82        
+        temperature = 1.4   
     elif "Anxious" in emotion:
         prompt = f"[soothing] [breathe] {text}"
         speed = 0.88
-        temperature = 0.7   # Stable and calming
+        temperature = 0.7   
     else:
         prompt = f"[calm] {text}"
         speed = 0.95
@@ -60,7 +69,6 @@ def get_audio():
     filepath = os.path.join("static/audio", filename)
 
     try:
-        # 2026 Inworld TTS-1.5 Max Endpoint
         url = "https://api.inworld.ai/tts/v1/voice"
         headers = {
             "Authorization": f"Basic {INWORLD_KEY}",
@@ -79,7 +87,6 @@ def get_audio():
         
         if response.status_code == 200:
             res_data = response.json()
-            # Decode the base64 audio back into a playable file
             audio_bytes = base64.b64decode(res_data['audioContent'])
             with open(filepath, "wb") as f:
                 f.write(audio_bytes)
