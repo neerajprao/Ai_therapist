@@ -1,23 +1,18 @@
 import os
 import uuid
 import requests
-import json
 import base64
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context, session
 from dotenv import load_dotenv
 
-# 1. Setup
 load_dotenv()
 INWORLD_KEY = os.getenv("INWORLD_KEY")
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# 2. Initialize Neural Brain
 from brain import TherapistBrain
 brain = TherapistBrain()
-
-print("--- SoulSync System: Luna Empathy Engine (2026) ---")
 
 @app.route('/')
 def index():
@@ -40,35 +35,32 @@ def process_audio_stream():
 @app.route('/get_audio', methods=['POST'])
 def get_audio():
     data = request.json
-    text = data.get('text', '')
+    # Clean text: remove asterisks or brackets if Llama-3 slips up
+    text = data.get('text', '').replace('*', '').replace('[', '').replace(']', '')
     emotion = data.get('emotion', 'Neutral')
     
-    # --- DYNAMIC EMPATHY SETTINGS ---
-    # Default settings (Neutral/Calm)
-    speed = 0.95
-    temperature = 0.5
-    tags = "[calm]"
-
-    # Adjusting based on user's emotional state
-    if "Sad" in emotion or "Depressed" in emotion:
-        speed = 0.82        # Slower for empathy
-        temperature = 0.9   # Higher variation for "cracked" or soft voice
-        tags = "[sad] [whispering] [sigh]"
+    # --- LUNA EMPATHY ENGINE CONFIG ---
+    speed = 1.0
+    temperature = 1.1 # Default 'human' variation
+    
+    if any(e in emotion for e in ["Sad", "Depressed", "Grief"]):
+        # [sad] lowers pitch, [whispering] adds breathiness, [sigh] is a non-verbal exhale
+        prompt = f"[sad] [whispering] [sigh] {text}"
+        speed = 0.82        # Slower for gravity
+        temperature = 1.4   # More emotional variation
     elif "Anxious" in emotion:
-        speed = 0.90        # Slightly slow but steady
-        temperature = 0.4   # Very stable/calming
-        tags = "[soothing] [breathe]"
-    elif "Angry" in emotion:
-        speed = 1.05        # Slightly faster but firm
-        temperature = 0.2   # Cold/Steady
-        tags = "[stern]"
+        prompt = f"[soothing] [breathe] {text}"
+        speed = 0.88
+        temperature = 0.7   # Stable and calming
+    else:
+        prompt = f"[calm] {text}"
+        speed = 0.95
 
-    full_prompt = f"{tags} {text}"
-    filename = f"voice_{uuid.uuid4().hex}.mp3"
+    filename = f"luna_{uuid.uuid4().hex}.mp3"
     filepath = os.path.join("static/audio", filename)
 
     try:
-        # Inworld 2026 TTS REST API
+        # 2026 Inworld TTS-1.5 Max Endpoint
         url = "https://api.inworld.ai/tts/v1/voice"
         headers = {
             "Authorization": f"Basic {INWORLD_KEY}",
@@ -76,8 +68,8 @@ def get_audio():
         }
         
         payload = {
-            "text": full_prompt,
-            "voiceId": "Luna", # Use the 'Meditation' preset
+            "text": prompt,
+            "voiceId": "Luna",
             "modelId": "inworld-tts-1.5-max",
             "speed": speed,
             "temperature": temperature
@@ -86,19 +78,16 @@ def get_audio():
         response = requests.post(url, headers=headers, json=payload, timeout=15)
         
         if response.status_code == 200:
-            # Inworld API returns JSON with base64 audioContent
             res_data = response.json()
-            audio_data = base64.b64decode(res_data['audioContent'])
-            
+            # Decode the base64 audio back into a playable file
+            audio_bytes = base64.b64decode(res_data['audioContent'])
             with open(filepath, "wb") as f:
-                f.write(audio_data)
+                f.write(audio_bytes)
             return jsonify({"audio_url": f"/static/audio/{filename}"})
         else:
-            print(f"Inworld Error: {response.text}")
-            return jsonify({"error": "Inworld API failed"}), 500
+            return jsonify({"error": f"Inworld Error: {response.text}"}), 500
 
     except Exception as e:
-        print(f"System Error: {e}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
