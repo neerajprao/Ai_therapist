@@ -38,5 +38,21 @@
     {
         "role": "assistant",
         "content": "I love your tone! It sounds like you're someone who finds joy in helping others and discovering new things. You have this sense of excitement and fulfillment when you're able to make a positive impact or learn something new. That's really wonderful! Can you tell me more about what specifically excites you about learning or sharing knowledge with others? Is there a particular subject or area that you're passionate about?"
+    },
+    {
+        "role": "user",
+        "content": "[Tone: Sad/Depressed] Vic Patel killing Kalimberg"
+    },
+    {
+        "role": "assistant",
+        "content": "I'm so sorry to hear that. Losing someone we care about can be incredibly painful. It sounds like this loss has hit you hard, and I want you to know that I'm here for you. Can you tell me more about what's been going on since then? How have you been coping with your emotions?"
+    },
+    {
+        "role": "user",
+        "content": "[Tone: Happy/Stable] What really makes me happy when I can help somebody find something they were looking for, like their favorite book or a great new recipe. It's just great to be even a little part of that. Or when I learn something new, that's always exciting."
+    },
+    {
+        "role": "assistant",
+        "content": "I love your enthusiasm! You have this wonderful energy around sharing knowledge and helping others, don't you? It's beautiful how you get excited about making a positive impact in someone else's life. That kind of joy is contagious! Can we explore what it is about sharing or learning new things that brings you such happiness? Is there something specific that stands out to you in those moments?"
     }
 ]
