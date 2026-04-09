@@ -7,14 +7,37 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
-        body { font-family: 'Inter', sans-serif; transition: background 0.5s ease; }
-        .glass { background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .pulse-active { animation: pulse-red 2s infinite; background-color: #ef4444 !important; }
-        @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
-        .theme-transition { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            margin: 0;
+            padding: 0;
+            background-color: #020617; /* Slate-950 */
+        }
+
+        .glass { 
+            background: rgba(15, 23, 42, 0.7); 
+            backdrop-filter: blur(16px); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+
+        .pulse-active { 
+            animation: pulse-red 2s infinite; 
+            background-color: #ef4444 !important; 
+        }
+        
+        @keyframes pulse-red { 
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); } 
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); } 
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } 
+        }
+
+        .theme-transition { 
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-200 min-h-screen">
+<body class="text-slate-200 min-h-screen">
     <div class="max-w-3xl mx-auto px-6 py-16">
         <header class="text-center mb-16">
             <h1 id="mainTitle" class="text-5xl font-extrabold bg-gradient-to-r from-indigo-400 via-blue-400 to-emerald-400 bg-clip-text text-transparent tracking-tight">SoulSync</h1>
@@ -35,10 +58,13 @@
                 <div id="emotionCard" class="glass rounded-2xl p-6 border-l-4 theme-transition">
                     <h3 class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Live Analysis</h3>
                     <span class="text-sm text-slate-400 italic" id="userSaid"></span>
-                    <div class="pt-2"><span id="emotion" class="px-3 py-1 text-xs font-bold rounded-full border theme-transition"></span></div>
+                    <div class="pt-2">
+                        <span id="emotion" class="px-3 py-1 text-xs font-bold rounded-full border theme-transition"></span>
+                    </div>
                 </div>
+
                 <div id="aiCard" class="glass rounded-3xl p-8 border border-white/5">
-                    <p id="aiResponse" class="text-xl leading-relaxed font-light text-slate-200"></p>
+                    <p id="aiResponse" class="text-xl leading-relaxed font-light text-slate-200 opacity-0 transition-opacity duration-700"></p>
                     <div id="voiceStatus" class="mt-4 text-[10px] text-indigo-400 font-bold uppercase tracking-widest opacity-0 animate-pulse">Neural Voice Rendering...</div>
                 </div>
             </div>
@@ -46,23 +72,26 @@
     </div>
 
     <script>
-        let mediaRecorder; let audioChunks = [];
+        let mediaRecorder; 
+        let audioChunks = [];
         const recordBtn = document.getElementById('recordBtn');
         const statusText = document.getElementById('status');
         const resultArea = document.getElementById('resultArea');
         const voiceStatus = document.getElementById('voiceStatus');
+        const aiResponseText = document.getElementById('aiResponse');
 
         function updateUITheme(emotion) {
             const themes = {
-                'Happy': { border: 'border-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
-                'Sad': { border: 'border-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400' },
-                'Angry': { border: 'border-red-500', bg: 'bg-red-500/10', text: 'text-red-400' },
-                'Anxious': { border: 'border-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-400' },
-                'Neutral': { border: 'border-blue-500', bg: 'bg-blue-500/10', text: 'text-blue-400' }
+                'Happy': { borderClass: 'border-emerald-500', bg: 'bg-emerald-500/10', text: 'text-emerald-400' },
+                'Sad': { borderClass: 'border-purple-500', bg: 'bg-purple-500/10', text: 'text-purple-400' },
+                'Angry': { borderClass: 'border-red-500', bg: 'bg-red-500/10', text: 'text-red-400' },
+                'Anxious': { borderClass: 'border-amber-500', bg: 'bg-amber-500/10', text: 'text-amber-400' },
+                'Neutral': { borderClass: 'border-blue-500', bg: 'bg-blue-500/10', text: 'text-blue-400' }
             };
             let theme = themes['Neutral'];
             for (const key in themes) { if (emotion.includes(key)) { theme = themes[key]; break; } }
-            document.getElementById('emotionCard').className = `glass rounded-2xl p-6 border-l-4 theme-transition ${theme.border}`;
+            
+            document.getElementById('emotionCard').className = `glass rounded-2xl p-6 border-l-4 theme-transition ${theme.borderClass}`;
             document.getElementById('emotion').className = `px-3 py-1 text-xs font-bold rounded-full border theme-transition ${theme.bg} ${theme.text}`;
         }
 
@@ -94,7 +123,9 @@
                 const decoder = new TextDecoder();
                 
                 resultArea.classList.remove('hidden');
-                document.getElementById('aiResponse').innerText = "";
+                aiResponseText.innerText = "";
+                aiResponseText.classList.add('opacity-0');
+                
                 let aiFullText = ""; 
                 let isMetadata = true; 
                 let currentEmotion = "Neutral";
@@ -104,21 +135,15 @@
                     if (done) break;
                     let chunk = decoder.decode(value);
 
-                    // Handle the Metadata header
                     if (isMetadata && chunk.includes("METADATA|")) {
                         const parts = chunk.split('|');
-                        // Update the "Live Analysis" block with user transcript
                         document.getElementById('userSaid').innerText = `"${parts[1]}"`;
                         currentEmotion = parts[2];
                         document.getElementById('emotion').innerText = currentEmotion;
                         updateUITheme(currentEmotion);
-                        
-                        // Remaining part of the chunk is the start of AI text
                         chunk = parts.slice(3).join("");
                         isMetadata = false;
                     }
-                    
-                    document.getElementById('aiResponse').innerText += chunk;
                     aiFullText += chunk;
                 }
 
@@ -129,9 +154,17 @@
                     body: JSON.stringify({text: aiFullText, emotion: currentEmotion}) 
                 });
                 const ttsData = await ttsRes.json();
-                
                 voiceStatus.style.opacity = "0";
-                new Audio(ttsData.audio_url + "?t=" + Date.now()).play();
+
+                const audio = new Audio(ttsData.audio_url + "?t=" + Date.now());
+                
+                audio.onplay = () => {
+                    aiResponseText.innerText = aiFullText;
+                    aiResponseText.classList.remove('opacity-0');
+                    aiResponseText.classList.add('opacity-100');
+                };
+
+                audio.play();
                 statusText.innerText = "Ready";
             } catch (e) { statusText.innerText = "Error"; }
         }
