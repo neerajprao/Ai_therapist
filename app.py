@@ -2,6 +2,7 @@ import os
 import uuid
 import requests
 import base64
+import json
 from flask import Flask, render_template, request, jsonify, Response, stream_with_context, session
 from dotenv import load_dotenv
 
@@ -11,33 +12,46 @@ INWORLD_KEY = os.getenv("INWORLD_KEY")
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# Create necessary directories
+# Directory Setup
 os.makedirs("static/audio", exist_ok=True)
 os.makedirs("data/raw_audio", exist_ok=True)
+os.makedirs("data/history", exist_ok=True)
 
 from brain import TherapistBrain
 brain = TherapistBrain()
 
 @app.route('/')
 def index():
+    # Every refresh creates a new unique session and a new JSON history file
     session['id'] = str(uuid.uuid4())
+    history_file = f"data/history/{session['id']}.json"
+    
+    # Initialize the JSON file with the system prompt
+    initial_data = {
+        "session_id": session['id'],
+        "history": [{"role": "system", "content": brain.system_prompt}]
+    }
+    with open(history_file, 'w') as f:
+        json.dump(initial_data, f, indent=4)
+        
     return render_template('index.html')
 
 @app.route('/process_audio_stream', methods=['POST'])
 def process_audio_stream():
     if 'audio' not in request.files: return "No audio", 400
     audio_file = request.files['audio']
-    temp_path = f"data/raw_audio/{session['id']}_input.wav"
+    session_id = session.get('id')
+    temp_path = f"data/raw_audio/{session_id}_input.wav"
     audio_file.save(temp_path)
     
     user_text = brain.transcribe_audio(temp_path)
     detected_emotion = brain.detect_emotion(user_text)
     
     def generate():
-        # Header for UI: METADATA|Transcript|Emotion|
         yield f"METADATA|{user_text}|{detected_emotion}|"
         
-        for chunk in brain.generate_streaming_response(temp_path, pre_transcribed_text=user_text):
+        # Pass session_id to maintain persistent JSON history
+        for chunk in brain.generate_streaming_response(temp_path, session_id, pre_transcribed_text=user_text):
             yield chunk
             
     return Response(stream_with_context(generate()), mimetype='text/plain')
@@ -91,7 +105,6 @@ def get_audio():
             return jsonify({"audio_url": f"/static/audio/{filename}"})
         else:
             return jsonify({"error": f"Inworld Error: {response.text}"}), 500
-
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
