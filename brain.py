@@ -5,12 +5,10 @@ import re
 
 class TherapistBrain:
     def __init__(self):
-        # 1. Load Whisper locally on your M3 Pro (Base is fastest)
         print("Loading Whisper Speech-to-Text...")
         self.stt_model = whisper.load_model("base")
         
-        # 2. Set the "Luna" Personality
-        self.model_name = "llama3" # Ensure you have run 'ollama pull llama3'
+        self.model_name = "llama3" 
         self.system_prompt = (
             "You are Luna, a deeply empathetic, soft-spoken therapist. "
             "Your goal is to provide comfort. "
@@ -24,36 +22,29 @@ class TherapistBrain:
         self.chat_history = [{"role": "system", "content": self.system_prompt}]
 
     def transcribe_audio(self, audio_path):
-        """Converts user speech to text locally."""
         if not os.path.exists(audio_path):
             return ""
         result = self.stt_model.transcribe(audio_path, fp16=False)
         return result['text'].strip()
 
     def detect_emotion(self, text):
-        """
-        Simple keyword-based logic for speed. 
-        In 2026, LLMs are fast enough to detect this in the stream.
-        """
         text = text.lower()
         if any(word in text for word in ["sad", "empty", "grief", "hurts", "lost", "pulls"]):
-            return "Sad/Depressed"
+            return "Sad"
         if any(word in text for word in ["scared", "anxious", "worry", "panic"]):
             return "Anxious"
-        return "Neutral/Calm"
+        return "Neutral"
 
-    def generate_streaming_response(self, audio_path):
-        """Process audio -> Text -> Llama-3 Reasoning -> Clean Stream"""
+    def generate_streaming_response(self, audio_path, pre_transcribed_text=None):
+        # Use existing transcript if provided, otherwise transcribe now
+        user_input = pre_transcribed_text if pre_transcribed_text else self.transcribe_audio(audio_path)
         
-        # 1. Get user text
-        user_input = self.transcribe_audio(audio_path)
         if not user_input:
             yield "I'm listening. Please continue when you're ready."
             return
 
         self.chat_history.append({"role": "user", "content": user_input})
         
-        # 2. Get LLM response via Ollama
         stream = ollama.chat(
             model=self.model_name,
             messages=self.chat_history,
@@ -64,17 +55,15 @@ class TherapistBrain:
         for chunk in stream:
             content = chunk['message']['content']
             
-            # 3. THE CLEANER: Strip out asterisks and stage directions on the fly
-            # This prevents Luna from ever seeing a "*" or "[pause]"
-            clean_content = re.sub(r'\*.*?\*', '', content) # Removes *anything*
-            clean_content = re.sub(r'\[.*?\]', '', clean_content) # Removes [anything]
+            # Cleaner: Strip out LLM stage directions
+            clean_content = re.sub(r'\*.*?\*', '', content) 
+            clean_content = re.sub(r'\[.*?\]', '', clean_content) 
             
             full_reply += clean_content
             yield clean_content
 
         self.chat_history.append({"role": "assistant", "content": full_reply})
 
-# To test this file independently:
 if __name__ == "__main__":
     brain = TherapistBrain()
     print("Brain is online.")
