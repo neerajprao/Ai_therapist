@@ -11,14 +11,16 @@ INWORLD_KEY = os.getenv("INWORLD_KEY")
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
+# Create necessary directories
+os.makedirs("static/audio", exist_ok=True)
+os.makedirs("data/raw_audio", exist_ok=True)
+
 from brain import TherapistBrain
 brain = TherapistBrain()
 
 @app.route('/')
 def index():
     session['id'] = str(uuid.uuid4())
-    os.makedirs("static/audio", exist_ok=True)
-    os.makedirs("data/raw_audio", exist_ok=True)
     return render_template('index.html')
 
 @app.route('/process_audio_stream', methods=['POST'])
@@ -28,17 +30,13 @@ def process_audio_stream():
     temp_path = f"data/raw_audio/{session['id']}_input.wav"
     audio_file.save(temp_path)
     
-    # Get transcription and emotion immediately
     user_text = brain.transcribe_audio(temp_path)
     detected_emotion = brain.detect_emotion(user_text)
     
     def generate():
-        # Step 1: Send the Metadata Header
-        # Format: METADATA|Transcript|Emotion|
+        # Header for UI: METADATA|Transcript|Emotion|
         yield f"METADATA|{user_text}|{detected_emotion}|"
         
-        # Step 2: Stream the LLM response
-        # We pass the pre-transcribed text to the brain to save compute
         for chunk in brain.generate_streaming_response(temp_path, pre_transcribed_text=user_text):
             yield chunk
             

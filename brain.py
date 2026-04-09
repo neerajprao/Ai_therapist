@@ -6,6 +6,7 @@ import re
 class TherapistBrain:
     def __init__(self):
         print("Loading Whisper Speech-to-Text...")
+        # Note: Using 'base' model for speed on M3 Pro
         self.stt_model = whisper.load_model("base")
         
         self.model_name = "llama3" 
@@ -24,6 +25,7 @@ class TherapistBrain:
     def transcribe_audio(self, audio_path):
         if not os.path.exists(audio_path):
             return ""
+        # fp16=False used for CPU/MPS compatibility
         result = self.stt_model.transcribe(audio_path, fp16=False)
         return result['text'].strip()
 
@@ -33,10 +35,11 @@ class TherapistBrain:
             return "Sad"
         if any(word in text for word in ["scared", "anxious", "worry", "panic"]):
             return "Anxious"
+        if any(word in text for word in ["angry", "mad", "hate", "annoyed"]):
+            return "Angry"
         return "Neutral"
 
     def generate_streaming_response(self, audio_path, pre_transcribed_text=None):
-        # Use existing transcript if provided, otherwise transcribe now
         user_input = pre_transcribed_text if pre_transcribed_text else self.transcribe_audio(audio_path)
         
         if not user_input:
@@ -55,7 +58,7 @@ class TherapistBrain:
         for chunk in stream:
             content = chunk['message']['content']
             
-            # Cleaner: Strip out LLM stage directions
+            # Remove any unwanted LLM artifacts
             clean_content = re.sub(r'\*.*?\*', '', content) 
             clean_content = re.sub(r'\[.*?\]', '', clean_content) 
             
