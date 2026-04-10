@@ -8,46 +8,51 @@ SoulSync uses a two-phase voice emotion pipeline:
 
 1. **Phase 1: Emotion Embedding Extraction**
    - Uses `models/emotion2vec` and `train_emotion.py`
-   - Converts audio into an emotion-aware embedding vector
+   - Converts audio into an emotion-aware embedding vector (1024D)
 
 2. **Phase 2: Emotion Bridge Network**
    - Uses `train_bridge.py`
    - Trains a small classifier to map embeddings to one of 5 emotion categories
 
-These two phases power `therapist_bot.py`, which can classify recorded voice into emotional labels.
+These two phases power `therapist_bot.py`, which can classify recorded voice into emotional labels. The pipeline is separate from the text-based emotion detection in `brain.py` used for TTS.
 
 ## File Summary
 
 - `train_emotion.py`
-  - Loads `models/emotion2vec`
-  - Uses `funasr.AutoModel` to generate emotion labels and embeddings from audio
+  - Loads `models/emotion2vec` via FunASR AutoModel on MPS/CPU
+  - Uses `self.model.generate(input=audio_path, extract_embedding=True)` to get labels and embeddings
   - Saves `data/test_embedding.npy` during test mode
+  - Device detection: MPS for Apple Silicon, else CPU
 
 - `train_bridge.py`
-  - Defines the `TherapistBridge` neural network
-  - Trains on `data/X_train.npy` / `data/y_train.npy`
+  - Defines the `TherapistBridge` neural network: Linear(1024, 256) → ReLU → Dropout(0.2) → Linear(256, 5) → LogSoftmax
+  - Trains on `data/X_train.npy` / `data/y_train.npy` with Adam (lr=0.001), NLLLoss, 50 epochs
   - Saves weights to `models/checkpoints/bridge_v1.pth`
+  - Prints loss every 10 epochs
 
 - `generate_synthetic_data.py`
-  - Creates a synthetic dataset using a few anchor audio files
-  - Adds random Gaussian noise to each embedding to build a larger dataset
-  - Produces `data/X_train.npy` and `data/y_train.npy`
+  - Creates synthetic dataset using anchor audio files
+  - Adds Gaussian noise (μ=0, σ=0.02) to each embedding for 100 variations per class
+  - Produces `data/X_train.npy` (float32 embeddings) and `data/y_train.npy` (int64 labels)
+  - Currently uses only 2 classes: Sad (1), Happy (4)
 
 - `prep_data.py`
-  - Generates a skeleton metadata CSV at `data/metadata.csv`
-  - Intended as a starting point for labeling raw audio files
+  - Generates empty `data/metadata.csv` with `file_path` and `label` columns
+  - Intended for manual labeling but not integrated into training
 
 - `therapist_bot.py`
-  - Loads the Emotion2Vec encoder and trained bridge
-  - Exposes `analyze_voice(audio_path)` returning a human-readable emotion label
+  - Loads Emotion2Vec encoder and bridge weights
+  - Exposes `analyze_voice(audio_path)` returning human-readable emotion string
+  - Maps class indices to EMOTION_MAP: 0→Anxious, 1→Sad, 2→Angry, 3→Neutral, 4→Happy
 
 - `transcribe.py`
-  - Local Whisper transcription helper
-  - Useful for verifying audio quality and debug transcriptions
+  - Loads Whisper base model on MPS/CPU
+  - Transcribes audio to text for testing
+  - Useful for verifying audio quality before emotion training
 
 ## Emotion Classes
 
-The bridge is trained to predict one of five classes:
+The bridge predicts one of five classes (matching `therapist_bot.py`):
 
 - `0`: Anxious/Stressed
 - `1`: Sad/Depressed
@@ -55,15 +60,16 @@ The bridge is trained to predict one of five classes:
 - `3`: Neutral/Calm
 - `4`: Happy/Stable
 
-These classes are defined in `therapist_bot.py` as `EMOTION_MAP`.
+These are defined in `EMOTION_MAP` for inference.
 
 ## Setup Requirements
 
 Before running any training or inference:
 
-- Install packages from `requirements.txt`
-- Ensure `models/emotion2vec/` exists and is populated with the Emotion2Vec model files
-- Ensure `data/raw_audio/` contains anchor audio files such as `test.wav` and `sad.wav`
+- Install packages from `requirements.txt` (torch, funasr, librosa, numpy, pandas)
+- Ensure `models/emotion2vec/` exists with model files (config.yaml, model.pt, tokens.txt)
+- Ensure `data/raw_audio/` contains anchor audio files (e.g., test.wav, sad.wav)
+- Python 3.8+, torch with MPS support for Mac
 
 Optional but recommended:
 - `python3 -m venv venv`
@@ -76,10 +82,12 @@ Optional but recommended:
 
 Place or record labeled audio files in `data/raw_audio/`.
 
-Example anchor files used by the current scripts:
+Example anchor files used by current scripts:
 
-- `data/raw_audio/test.wav` → Happy/Stable anchor
-- `data/raw_audio/sad.wav` → Sad/Depressed anchor
+- `data/raw_audio/test.wav` → Happy/Stable (label 4)
+- `data/raw_audio/sad.wav` → Sad/Depressed (label 1)
+
+Audio should be WAV format, clear voice samples.
 
 ### 2. Create metadata placeholder
 
@@ -87,14 +95,9 @@ Example anchor files used by the current scripts:
 python prep_data.py
 ```
 
-This writes a fresh `data/metadata.csv` with columns:
+Creates `data/metadata.csv` with empty rows for `file_path` and `label`. Not currently used in pipeline.
 
-- `file_path`
-- `label`
-
-Use this CSV to track or expand your dataset labeling process.
-
-### 3. Extract embeddings and create a synthetic dataset
+### 3. Extract embeddings and create synthetic dataset
 
 ```bash
 python generate_synthetic_data.py
@@ -102,16 +105,15 @@ python generate_synthetic_data.py
 
 What this does:
 
-- Loads the Emotion2Vec model via `EmotionProcessor`
-- Extracts an embedding for each anchor audio file
-- Generates 100 noisy variations of each embedding
-- Saves datasets to `data/X_train.npy` and `data/y_train.npy`
+- Initializes `EmotionProcessor` with Emotion2Vec model
+- For each anchor file: extracts embedding, generates 100 noisy copies (noise ~ N(0, 0.02))
+- Saves to NumPy arrays: X (shape: [200, 1024]), y (shape: [200,])
 
 Important notes:
 
-- The script currently uses only two labels: `1` for sad and `4` for happy.
-- It applies Gaussian noise to simulate data diversity.
-- You can extend this script to use more anchor files and more emotion classes.
+- Script skips missing files with warning
+- Noise level (0.02) creates variation without destroying structure
+- Extend by adding more targets to the `targets` dict with labels 0-4
 
 ### 4. Train the bridge classifier
 
@@ -121,18 +123,17 @@ python train_bridge.py
 
 Training details:
 
-- Network architecture: `1024 -> 256 -> 5`
-- Activation: ReLU
-- Output: LogSoftmax
-- Loss: Negative log likelihood (`NLLLoss`)
-- Optimizer: Adam, learning rate `0.001`
-- Epochs: 50
+- Network: 1024→256→5 with ReLU, Dropout(0.2), LogSoftmax
+- Loss: Negative Log Likelihood (NLLLoss)
+- Optimizer: Adam, lr=0.001
+- Epochs: 50 (prints loss every 10)
+- Device: MPS if available, else CPU
 
 Output:
 
-- `models/checkpoints/bridge_v1.pth`
+- `models/checkpoints/bridge_v1.pth` (state_dict)
 
-If the data file does not exist, the script aborts with an error message.
+Aborts if `data/X_train.npy` not found.
 
 ### 5. Verify using therapist_bot.py
 
@@ -142,91 +143,134 @@ python therapist_bot.py
 
 Behavior:
 
-- Loads the Emotion2Vec encoder and bridge weights
-- Attempts to analyze `data/raw_audio/sad.wav`
-- Prints a predicted emotion label
+- Loads encoder and bridge on device
+- Analyzes `data/raw_audio/sad.wav`
+- Prints predicted emotion (e.g., "Sad/Depressed")
 
-This script is a quick end-to-end sanity check for the emotion pipeline.
+This is end-to-end test of the pipeline.
 
 ## `train_emotion.py` Detailed Behavior
 
 The `EmotionProcessor` class:
 
-- Detects available device: `mps` if on Apple silicon, otherwise `cpu`
-- Loads a local Emotion2Vec model from `models/emotion2vec`
-- Runs `self.model.generate(input=audio_path, extract_embedding=True)`
-- Returns a label score dictionary and a NumPy embedding vector
+- Loads model from `models/emotion2vec` with `AutoModel`
+- Device: MPS for Apple Silicon, CPU otherwise
+- `get_results(audio_path)`: calls `model.generate(..., extract_embedding=True)`
+- Returns: labels dict (e.g., {'happy': 0.85, ...}), embeddings np.array (1024,)
 
-When executed directly, it will:
+When executed directly:
 
-- Load `data/raw_audio/test.wav`
-- Print a report of top emotion labels and embedding shape
-- Save the embedding into `data/test_embedding.npy`
+- Processes `data/raw_audio/test.wav`
+- Prints top emotion and confidence
+- Prints embedding shape and preview
+- Saves embedding to `data/test_embedding.npy`
 
 ## `train_bridge.py` Architecture Notes
 
-The bridge exists to convert the Emotion2Vec embedding into a discrete emotion class.
+The bridge converts Emotion2Vec embedding to emotion class.
 
-Model definition:
+Model definition (in `TherapistBridge`):
 
-- `Linear(1024, 256)`
-- `ReLU()`
-- `Dropout(0.2)`
-- `Linear(256, num_classes)`
-- `LogSoftmax(dim=1)`
+- `nn.Linear(1024, 256)`
+- `nn.ReLU()`
+- `nn.Dropout(0.2)`
+- `nn.Linear(256, num_classes)`  # 5
+- `nn.LogSoftmax(dim=1)`
 
 Training loop:
 
-- Loads `data/X_train.npy` and `data/y_train.npy`
-- Converts them to Torch tensors
-- Runs a fixed 50-epoch training cycle
-- Prints loss every 10 epochs
-- Saves final weights to `models/checkpoints/bridge_v1.pth`
+- Loads X, y as torch tensors on device
+- Fixed 50 epochs with zero_grad, forward, loss, backward, step
+- No validation split; simple overfitting to synthetic data
 
 ## Inference with `therapist_bot.py`
 
-`TherapistBot.analyze_voice(audio_path)` does:
+`TherapistBot.analyze_voice(audio_path)`:
 
-1. `EmotionProcessor.get_results(audio_path)` to extract voice embeddings
-2. Converts embeddings to a `(1, 1024)` tensor
-3. Feeds the tensor to `TherapistBridge`
-4. Selects the class with highest score
-5. Maps the class index to a human-readable label using `EMOTION_MAP`
+1. `EmotionProcessor.get_results(audio_path)` → labels, embeddings
+2. Convert embeddings to tensor (1, 1024) on device
+3. Forward through `TherapistBridge`
+4. Argmax to get class index
+5. Map to string via `EMOTION_MAP`
 
-This is the inference path for voice emotion classification.
+This is the voice emotion prediction used separately from text emotion.
 
 ## Extending the Pipeline
 
 Recommended improvements:
 
-- Add more anchor files to `generate_synthetic_data.py`
-- Replace synthetic augmentation with real labeled audio
-- Add a true `data/metadata.csv` labeling workflow
-- Increase training epochs or add validation split
-- Use a better classifier than a simple single-hidden-layer network
-- Add logging and error handling for missing files and invalid audio
+- Add more anchor files for all 5 emotions
+- Replace synthetic noise with real labeled audio
+- Implement `data/metadata.csv` labeling workflow
+- Add validation split and early stopping in training
+- Experiment with larger networks or pre-trained classifiers
+- Add data augmentation (pitch shift, speed change)
+- Integrate voice emotion into main app (currently text-based for TTS)
 
 ## Notes and Caveats
 
-- The current pipeline is mostly prototype-level and uses limited synthetic data.
-- The Emotion2Vec model must be present in `models/emotion2vec/` for `train_emotion.py` and `therapist_bot.py` to work.
-- `generate_synthetic_data.py` will silently skip missing anchor audio files.
-- `train_bridge.py` assumes the synthetic dataset already exists.
-- `prep_data.py` does not actually label audio; it only creates an empty CSV.
+- Pipeline is prototype with synthetic data from 2 classes
+- Emotion2Vec model must be in `models/emotion2vec/` (not included; download separately)
+- `generate_synthetic_data.py` skips missing anchors silently
+- `train_bridge.py` requires synthetic data first
+- `prep_data.py` creates CSV but doesn't populate it
+- Tested on Mac with MPS; adjust device for Windows/Linux
 
 ## Quick Command Reference
 
-- `python prep_data.py`
-- `python generate_synthetic_data.py`
-- `python train_bridge.py`
-- `python train_emotion.py`
-- `python therapist_bot.py`
-- `python transcribe.py`
+- `python prep_data.py` — Create metadata CSV
+- `python generate_synthetic_data.py` — Generate synthetic X/y
+- `python train_bridge.py` — Train bridge network
+- `python train_emotion.py` — Test embedding extraction
+- `python therapist_bot.py` — Test emotion prediction
+- `python transcribe.py` — Test Whisper transcription
 
 ## Recommended File Additions
 
-For a stronger training workflow, add:
+For stronger training:
 
-- `data/metadata.csv` with actual labeled audio rows
-- more `data/raw_audio/` samples across all five emotion classes
-- `README_DATA.md` or annotated dataset documentation if you scale beyond prototypes
+- More `data/raw_audio/` samples across all 5 emotions
+- Populated `data/metadata.csv` with real labels
+- `README_DATA.md` for dataset documentation
+- Validation/test splits in training
+- Model evaluation metrics (accuracy, F1)
+
+## Extending the Pipeline
+
+Recommended improvements:
+
+- Add more anchor files for all 5 emotions
+- Replace synthetic noise with real labeled audio
+- Implement `data/metadata.csv` labeling workflow
+- Add validation split and early stopping in training
+- Experiment with larger networks or pre-trained classifiers
+- Add data augmentation (pitch shift, speed change)
+- Integrate voice emotion into main app (currently text-based for TTS)
+
+## Notes and Caveats
+
+- Pipeline is prototype with synthetic data from 2 classes
+- Emotion2Vec model must be in `models/emotion2vec/` (not included; download separately)
+- `generate_synthetic_data.py` skips missing anchors silently
+- `train_bridge.py` requires synthetic data first
+- `prep_data.py` creates CSV but doesn't populate it
+- Tested on Mac with MPS; adjust device for Windows/Linux
+
+## Quick Command Reference
+
+- `python prep_data.py` — Create metadata CSV
+- `python generate_synthetic_data.py` — Generate synthetic X/y
+- `python train_bridge.py` — Train bridge network
+- `python train_emotion.py` — Test embedding extraction
+- `python therapist_bot.py` — Test emotion prediction
+- `python transcribe.py` — Test Whisper transcription
+
+## Recommended File Additions
+
+For stronger training:
+
+- More `data/raw_audio/` samples across all 5 emotions
+- Populated `data/metadata.csv` with real labels
+- `README_DATA.md` for dataset documentation
+- Validation/test splits in training
+- Model evaluation metrics (accuracy, F1)
