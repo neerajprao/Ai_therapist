@@ -62,20 +62,18 @@ def get_audio():
     text = data.get('text', '').replace('*', '').replace('[', '').replace(']', '')
     emotion = data.get('emotion', 'Neutral')
     
-    speed = 1.0
+    # Constant speed as requested
+    speed = 1.5
     temperature = 1.1 
     
     if any(e in emotion for e in ["Sad", "Depressed", "Grief"]):
         prompt = f"[sad] [whispering] [sigh] {text}"
-        speed = 0.82        
         temperature = 1.4   
     elif "Anxious" in emotion:
         prompt = f"[soothing] [breathe] {text}"
-        speed = 0.88
         temperature = 0.7   
     else:
         prompt = f"[calm] {text}"
-        speed = 0.95
 
     filename = f"luna_{uuid.uuid4().hex}.mp3"
     filepath = os.path.join("static/audio", filename)
@@ -91,7 +89,7 @@ def get_audio():
             "text": prompt,
             "voiceId": "Luna",
             "modelId": "inworld-tts-1.5-max",
-            "speed": speed,
+            "speed": speed, # Now 1.25 for every response
             "temperature": temperature
         }
 

@@ -10,10 +10,13 @@ class TherapistBrain:
         self.stt_model = whisper.load_model("base")
         
         self.model_name = "llama3" 
+        # Updated prompt for a neutral, grounded, and exploratory persona
         self.system_prompt = (
-            "You are Luna, a deeply empathetic, soft-spoken therapist. "
-            "Your goal is to provide comfort. Use '...' for a soft pause. "
-            "CRITICAL: Keep responses very brief (1-2 sentences). Speak only words, no actions."
+            "You are Luna, a professional and grounded therapist. Your tone is neutral, calm, and steady. "
+            "Your goal is to listen deeply and validate the user's experience without mirroring their distress. "
+            "CRITICAL: Keep responses to 1-2 concise sentences. Always end with a gentle, open-ended question "
+            "or an inviting observation that encourages the user to keep talking. Speak only words, no actions. "
+            "Use '...' for a soft pause."
         )
 
     def transcribe_audio(self, audio_path):
@@ -60,6 +63,7 @@ class TherapistBrain:
         full_reply = ""
         for chunk in stream:
             content = chunk['message']['content']
+            # Cleaning logic to ensure TTS doesn't read stage directions
             clean_content = re.sub(r'\*.*?\*', '', content) 
             clean_content = re.sub(r'\[.*?\]', '', clean_content) 
             full_reply += clean_content
@@ -71,4 +75,4 @@ class TherapistBrain:
 
 if __name__ == "__main__":
     brain = TherapistBrain()
-    print("Brain is online.")
+    print("Brain is online with the updated Luna persona.")
