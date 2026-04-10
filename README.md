@@ -1,246 +1,337 @@
-# SoulSync — AI Therapy Voice Assistant
+# SoulSync - AI Therapy Voice Assistant
 
-SoulSync is an interactive AI therapist prototype built with a Flask web UI, local speech-to-text, an LLM-based therapy response engine, emotion-aware voice synthesis, and a hybrid emotion analysis pipeline.
+SoulSync is a voice-first therapy assistant prototype with a Flask web app, local speech transcription, locally hosted LLM response generation, emotion-aware TTS playback, and a separate voice-emotion training pipeline.
 
-## Project Overview
+This README is the complete project guide for setup, architecture, API behavior, data artifacts, and all scripts in this repository.
 
-- **Frontend**: A Tailwind-based single-page web interface at `templates/index.html` with JavaScript audio recording and real-time streaming.
-- **Backend**: A Flask server in `app.py` that accepts recorded audio, transcribes it, generates a therapeutic reply, and returns voice audio.
-- **Speech recognition**: `whisper` is used locally inside `brain.py` for transcription (base model for efficiency).
-- **LLM model**: `ollama` calls a local `llama3` model to generate empathetic therapist responses as Luna, a soft-spoken therapist.
-- **Voice rendering**: Uses the Inworld TTS API to produce a calm, emotional voice from generated text, with speed and temperature adjustments based on detected emotion.
-- **Emotion analysis**: Two-tier system: text-based emotion detection in `brain.py` for TTS prompts, and a trained voice emotion classifier in `therapist_bot.py` using `Emotion2Vec` embeddings and a bridge neural network.
-- **Session management**: Each user session gets a unique ID, with conversation history saved as JSON files in `data/history/`.
+## 1) What the Project Does
 
-## Repository Structure
+- Records user speech in browser.
+- Transcribes audio locally with Whisper.
+- Detects a coarse text emotion (Sad, Anxious, Neutral).
+- Streams therapist response text from Ollama (llama3) in real time.
+- Converts final response into audio with Inworld TTS voice Luna.
+- Stores per-session chat history in JSON files.
+- Includes an independent training stack for voice emotion classification with Emotion2Vec + a PyTorch bridge model.
 
-- `app.py` — Flask application with routes for UI, audio processing, and TTS. Handles session creation, audio saving, streaming responses, and Inworld API calls.
-- `brain.py` — Core logic: Whisper transcription, text-based emotion detection, LLM streaming chat with Ollama, history management per session.
-- `therapist_bot.py` — Voice emotion classification wrapper using Emotion2Vec encoder and trained bridge network for 5 emotion categories.
-- `train_emotion.py` — Loads `models/emotion2vec` via FunASR AutoModel, extracts emotion labels and 1024D embeddings from audio.
-- `train_bridge.py` — Defines and trains the `TherapistBridge` neural network (1024→256→5) to map embeddings to emotion classes.
-- `generate_synthetic_data.py` — Builds synthetic training data from anchor audio files by adding Gaussian noise to create larger datasets.
-- `prep_data.py` — Creates a skeleton `data/metadata.csv` for labeling audio files (currently unused in pipeline).
-- `transcribe.py` — Standalone Whisper transcription test harness.
-- `requirements.txt` — Python dependencies including torch, funasr, librosa, flask, requests, python-dotenv, ollama, whisper.
-- `how_to_open.txt` — Quick start commands.
-- `templates/index.html` — Frontend UI with Tailwind CSS, audio recording via MediaRecorder API, streaming text display, and dynamic emotion-based theming.
-- `data/` — Raw audio files, saved recordings, synthetic data (X_train.npy, y_train.npy), test embeddings, session history JSONs.
-- `models/` — Pretrained Emotion2Vec model (config.yaml, model.pt, tokens.txt), saved bridge checkpoint (bridge_v1.pth).
-- `static/` — Generated TTS audio files (MP3s).
+## 2) Runtime Architecture
 
-## How It Works
+### Web layer
 
-1. User visits the web interface; a new session is created with a unique ID and initial history JSON.
-2. User clicks record; browser captures microphone input via MediaRecorder API.
-3. Frontend sends raw audio blob to `/process_audio_stream`.
-4. `app.py` saves audio to `data/raw_audio/{session_id}_input.wav`, transcribes via `brain.py`, detects text emotion.
-5. Stream starts with metadata: `METADATA|{user_text}|{detected_emotion}|`, then LLM-generated text chunks.
-6. Frontend displays user text, emotion, and streams AI response.
-7. After streaming, frontend calls `/get_audio` with full text and emotion.
-8. `app.py` adjusts TTS parameters (speed, temperature, prompt) based on emotion, calls Inworld API, saves MP3 to `static/audio/`, returns URL.
-9. Frontend plays the audio and fades in the text.
+- Backend: Flask app in app.py.
+- Frontend: Single HTML page in templates/index.html using Tailwind CDN and browser MediaRecorder.
+- Session behavior: each page refresh creates a new session ID and a fresh session history file.
 
-## Key Features
+### Inference layer (main app)
 
-- **Local STT** using Whisper base model: no cloud required, runs on CPU/MPS.
-- **LLM empathy persona**: Luna responds briefly (1-2 sentences), uses pauses, removes actions/stage directions.
-- **Real-time streaming**: Partial text streamed as model generates; history saved per session.
-- **Emotion-aware TTS**: Voice prompt modified for Sad (whispering, sighing), Anxious (soothing, breathing), Neutral (calm); speed/temperature tuned.
-- **Hybrid emotion analysis**: Text keywords for TTS, trained model for voice classification (Anxious, Sad, Angry, Neutral, Happy).
-- **Session persistence**: Conversation history maintained in JSON files, loaded per session.
+- STT: whisper base model (local).
+- LLM: ollama chat API with model llama3 (local).
+- TTS: Inworld cloud API, voiceId Luna, modelId inworld-tts-1.5-max.
+- Text emotion detector: keyword rules in brain.py.
 
-## Installation
+### Training layer (separate from live chat)
+
+- Emotion embeddings: Emotion2Vec loaded from models/emotion2vec.
+- Bridge model: TherapistBridge maps 1024-d embedding -> 5 emotion classes.
+- Synthetic data generation: noisy embedding augmentation from anchor audio files.
+
+## 3) Repository Map (Every File)
+
+### Application entry points
+
+- app.py: Flask app, routes, session/history bootstrap, stream response, TTS request, audio file output.
+- brain.py: TherapistBrain class (Whisper load, transcription, emotion rules, Ollama streaming, history load/save).
+
+### Emotion training and analysis
+
+- train_emotion.py: EmotionProcessor around FunASR AutoModel for labels + embeddings.
+- generate_synthetic_data.py: Builds X_train.npy and y_train.npy from anchor files + Gaussian noise.
+- train_bridge.py: Defines and trains TherapistBridge network, saves bridge_v1.pth.
+- therapist_bot.py: Loads EmotionProcessor + trained bridge and predicts one of 5 mapped emotions.
+
+### Utilities
+
+- transcribe.py: Standalone Whisper transcription test.
+- prep_data.py: Creates empty data/metadata.csv with file_path,label columns.
+- how_to_open.txt: minimal quick launch commands.
+
+### Frontend + static
+
+- templates/index.html: UI, recorder logic, streaming parser, emotion-theme update, TTS playback.
+- static/speech.aiff: static audio asset.
+- static/audio/: generated mp3 response files are saved here.
+
+### Data + model artifacts
+
+- data/history/: per-session JSON histories, one file per session UUID.
+- data/history.json: additional history artifact.
+- data/raw_audio/: recorded user inputs and training anchor audio.
+- data/test_embedding.npy: saved embedding test output from train_emotion.py.
+- data/X_train.npy, data/y_train.npy: synthetic training tensors saved as NumPy arrays.
+- data/vector_vault/: Chroma vector store files (chroma.sqlite3 and index binaries).
+- models/emotion2vec/: local Emotion2Vec files (config.yaml, configuration.json, model.pt, tokens.txt).
+- models/checkpoints/bridge_v1.pth: trained bridge checkpoint.
+
+### Environment/config/dev files
+
+- requirements.txt: python dependencies.
+- .gitignore: ignores .env, venv, __pycache__, wav/mp3, history folder.
+- .env (not committed): expected to contain INWORLD_KEY.
+
+## 4) End-to-End Request Flow
+
+1. User opens /.
+2. Server creates new session UUID and writes data/history/<session>.json initialized with system prompt.
+3. Browser records microphone audio with MediaRecorder.
+4. Frontend posts form-data audio file to /process_audio_stream.
+5. Backend saves audio as data/raw_audio/<session>_input.wav.
+6. brain.py transcribes user audio.
+7. brain.py applies keyword emotion rules.
+8. Streaming response starts with prefix: METADATA|<user_text>|<emotion>|.
+9. Backend streams cleaned LLM chunks (stage directions removed).
+10. Frontend accumulates full text and renders live UI.
+11. Frontend posts full text + emotion to /get_audio.
+12. Backend builds emotion-conditioned TTS prompt and calls Inworld API.
+13. Backend saves decoded base64 audio to static/audio/luna_<uuid>.mp3.
+14. Frontend plays returned audio URL and reveals full response text.
+
+## 5) API Contract
+
+### GET /
+
+- Purpose: serve UI and initialize a new session/history file.
+- Side effect: replaces session id on every refresh.
+
+### POST /process_audio_stream
+
+- Input: multipart form with key audio.
+- Output: text/plain streaming response.
+- First emitted token format: METADATA|user_text|emotion|.
+- Remaining stream: assistant text chunks from Ollama.
+- Error case: returns 400 with No audio when audio is missing.
+
+### POST /get_audio
+
+- Input JSON:
+	- text: final assistant text.
+	- emotion: detected emotion label.
+- Behavior:
+	- removes *, [ and ] from text.
+	- speed fixed to 1.5.
+	- default temperature 1.1.
+	- Sad/Depressed/Grief -> prompt prepends [sad] [whispering] [sigh], temperature 1.4.
+	- Anxious -> prompt prepends [soothing] [breathe], temperature 0.7.
+	- otherwise -> prompt prepends [calm].
+- Output JSON success: {"audio_url": "/static/audio/<file>.mp3"}.
+- Output JSON failure: {"error": "..."} with status 500.
+
+## 6) Core Classes and Behavior
+
+### TherapistBrain (brain.py)
+
+- Loads whisper base at initialization.
+- Uses model_name = llama3 for Ollama chat.
+- System prompt forces neutral, calm therapist behavior, concise 1-2 sentence outputs, and a gentle question/invitation.
+- transcribe_audio:
+	- returns empty string if file missing.
+	- calls Whisper transcribe with fp16=False.
+- detect_emotion keyword rules:
+	- Sad if text has sad/empty/grief/hurts/lost.
+	- Anxious if text has scared/anxious/worry/panic.
+	- else Neutral.
+- _get_history / _save_history:
+	- reads/writes data/history/<session>.json.
+- generate_streaming_response:
+	- accepts pre_transcribed_text to avoid duplicate STT.
+	- if no user input: yields fallback sentence and exits.
+	- appends user message to history.
+	- streams ollama.chat chunks.
+	- strips *...* and [...]-style stage directions from chunks.
+	- appends final assistant reply to history and persists.
+
+### EmotionProcessor (train_emotion.py)
+
+- Loads FunASR AutoModel from models/emotion2vec.
+- Device: mps when available, else cpu.
+- get_results(audio_path):
+	- returns (None, None) if missing file.
+	- returns labels dictionary and embedding array from generate(..., extract_embedding=True).
+
+### TherapistBridge (train_bridge.py)
+
+- Architecture: Linear(1024,256) -> ReLU -> Dropout(0.2) -> Linear(256,5) -> LogSoftmax(dim=1).
+
+### TherapistBot (therapist_bot.py)
+
+- Loads EmotionProcessor and bridge checkpoint models/checkpoints/bridge_v1.pth.
+- analyze_voice:
+	- obtains embeddings.
+	- reshapes to batch dimension.
+	- predicts class argmax.
+	- maps class to human label.
+- EMOTION_MAP:
+	- 0 Anxious/Stressed
+	- 1 Sad/Depressed
+	- 2 Angry/Frustrated
+	- 3 Neutral/Calm
+	- 4 Happy/Stable
+
+## 7) Frontend Behavior (templates/index.html)
+
+- Uses MediaRecorder for audio capture.
+- Record button toggles between recording and processing states.
+- Sends blob as wav named session.wav to backend.
+- Parses streamed metadata prefix before assistant text.
+- Applies emotion-based theme classes:
+	- Happy -> emerald
+	- Sad -> purple
+	- Angry -> red
+	- Anxious -> amber
+	- Neutral -> blue
+- After text stream ends, requests TTS and plays returned audio URL.
+- Adds cache-busting query param to audio URL with timestamp.
+- UI status labels: Ready, Listening..., Processing..., Error.
+
+## 8) Installation and Setup
 
 ### Prerequisites
 
 - Python 3.8+
-- Ollama installed and `llama3` model pulled (`ollama pull llama3`)
-- Inworld TTS API key (sign up at inworld.ai)
-- Audio files for training/testing (e.g., `data/raw_audio/test.wav`, `data/raw_audio/sad.wav`)
+- Ollama installed locally
+- llama3 model pulled in Ollama
+- Inworld API credentials (base64 basic auth value)
+- Emotion2Vec local model files in models/emotion2vec
 
-### 1. Clone repository
+### Setup
 
-```bash
-git clone <repo-url>
-cd Ai_therapist
-```
+1. Create virtual environment.
 
-### 2. Create a Python virtual environment
+	 python3 -m venv venv
 
-```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
+2. Activate virtual environment.
 
-### 3. Install dependencies
+	 source venv/bin/activate
 
-```bash
-pip install -r requirements.txt
-```
+3. Install dependencies.
 
-Note: This installs torch (with MPS support for Apple Silicon), funasr for Emotion2Vec, librosa for audio, flask for web, etc.
+	 pip install -r requirements.txt
 
-### 4. Create environment file
+4. Add .env in repo root.
 
-Create a `.env` file in the repository root with your Inworld authorization key:
+	 INWORLD_KEY=your_base64_basic_auth_value
 
-```text
-INWORLD_KEY=your_base64_encoded_inworld_basic_auth_key
-```
+5. Ensure Ollama model is ready.
 
-- Obtain from Inworld dashboard; it's Base64 encoded `username:password`.
-- Used by `app.py` for TTS API calls.
+	 ollama pull llama3
 
-### 5. Ensure local models are available
+## 9) Run the App
 
-- `whisper` loads `base` model automatically.
-- `ollama` must have `llama3` available.
-- `models/emotion2vec/` must contain the full model files (downloaded separately, not included in repo).
+1. Activate env.
 
-## Running the App
+	 source venv/bin/activate
 
-```bash
-source venv/bin/activate
-python app.py
-```
+2. Start server.
 
-- Starts Flask on port 5000.
-- Open `http://127.0.0.1:5000` in browser.
-- Allow microphone access when prompted.
-- Click the record button to start therapy session.
+	 python app.py
 
-### Available Endpoints
+3. Open browser.
 
-- `GET /` — Serves the main UI, initializes new session with history JSON.
-- `POST /process_audio_stream` — Accepts audio file, returns streaming text with initial metadata.
-- `POST /get_audio` — Accepts text and emotion, returns TTS audio URL.
+	 http://127.0.0.1:5000
 
-## Training and Data Pipeline
+## 10) Training and Testing Commands
 
-### Prepare metadata (optional)
+- Create metadata skeleton:
 
-```bash
-python prep_data.py
-```
+	python prep_data.py
 
-Creates `data/metadata.csv` with columns `file_path` and `label` (for future expansion).
+- Generate synthetic training data:
 
-### Generate synthetic training examples
+	python generate_synthetic_data.py
 
-```bash
-python generate_synthetic_data.py
-```
+- Train bridge model:
 
-- Loads Emotion2Vec processor.
-- Extracts embeddings from anchor files (`data/raw_audio/test.wav` → Happy, `data/raw_audio/sad.wav` → Sad).
-- Generates 100 noisy variations per anchor (Gaussian noise σ=0.02).
-- Saves `data/X_train.npy` (embeddings) and `data/y_train.npy` (labels).
+	python train_bridge.py
 
-### Train the bridge network
+- Run embedding test:
 
-```bash
-python train_bridge.py
-```
+	python train_emotion.py
 
-- Loads synthetic data.
-- Trains `TherapistBridge` (1024→256→5) with Adam optimizer, NLLLoss, 50 epochs.
-- Saves weights to `models/checkpoints/bridge_v1.pth`.
+- Run bridge inference test:
 
-### Test Emotion Embeddings
+	python therapist_bot.py
 
-```bash
-python train_emotion.py
-```
+- Run transcription test:
 
-- Loads Emotion2Vec model on MPS/CPU.
-- Processes `data/raw_audio/test.wav`, prints top emotion and embedding shape.
-- Saves embedding to `data/test_embedding.npy`.
+	python transcribe.py
 
-### Test Voice Emotion Classification
+## 11) Data/Model File Expectations
 
-```bash
-python therapist_bot.py
-```
+- Required for app runtime:
+	- .env with INWORLD_KEY
+	- local Whisper model download (auto by package)
+	- local Ollama llama3
+- Required for voice-emotion pipeline:
+	- models/emotion2vec/* files
+	- data/raw_audio/test.wav and data/raw_audio/sad.wav (as currently scripted)
+	- models/checkpoints/bridge_v1.pth for therapist_bot.py
+- Auto-created at runtime:
+	- data/history/*.json
+	- data/raw_audio/<session>_input.wav
+	- static/audio/luna_<uuid>.mp3
 
-- Loads encoder and bridge.
-- Analyzes `data/raw_audio/sad.wav`, prints predicted emotion from 5 classes.
+## 12) Dependencies (requirements.txt)
 
-### Test Transcription
+- torch
+- torchvision
+- torchaudio
+- funasr
+- modelscope
+- librosa
+- numpy
+- pandas
+- soundfile
+- flask
+- requests
+- python-dotenv
+- ollama
+- whisper
 
-```bash
-python transcribe.py
-```
+## 13) Platform Notes
 
-- Loads Whisper base model.
-- Transcribes `data/raw_audio/sad.wav`, prints text.
+- Code prefers Apple Metal Performance Shaders (mps) when available.
+- Falls back to cpu automatically.
+- Designed and tested on macOS workflow.
 
-## Audio Emotion Inference
+## 14) Known Limitations
 
-`therapist_bot.py` provides voice-based emotion prediction:
+- Text emotion detector is simple keyword matching, not a learned NLP classifier.
+- Voice emotion model is trained on synthetic augmentation from two anchor classes in current script defaults.
+- No validation split/metrics in bridge training loop.
+- Session is reset on page refresh by design.
+- If Inworld key is missing/invalid, TTS endpoint fails.
+- If Ollama or llama3 is unavailable, streaming response fails.
 
-- Loads Emotion2Vec encoder and trained bridge.
-- Predicts one of: Anxious/Stressed, Sad/Depressed, Angry/Frustrated, Neutral/Calm, Happy/Stable.
+## 15) Troubleshooting
 
-Text-based emotion in `brain.py` uses keywords for TTS (Sad, Anxious, Neutral).
+- No audio captured:
+	- verify browser microphone permission and secure context support.
+- No streamed response:
+	- confirm Ollama service is running and llama3 exists.
+- TTS error JSON from /get_audio:
+	- validate INWORLD_KEY format and quota.
+- Missing model errors:
+	- ensure models/emotion2vec files and bridge_v1.pth are present.
+- Empty transcription:
+	- confirm input wav exists and contains intelligible speech.
 
-## Frontend Details
+## 16) Quick Start (Minimal)
 
-- Built with Tailwind CSS for glassmorphism design.
-- Uses MediaRecorder for audio capture.
-- Streams response text, updates emotion card with color themes.
-- Plays TTS audio after generation.
-- Session-based, refreshes create new history.
+1. source venv/bin/activate
+2. pip install -r requirements.txt
+3. set INWORLD_KEY in .env
+4. ollama pull llama3
+5. python app.py
 
-## Required Files and Directories
+## 17) License
 
-- `data/raw_audio/` — Anchor audio files for training (e.g., test.wav, sad.wav).
-- `data/X_train.npy` / `data/y_train.npy` — Synthetic training data.
-- `data/test_embedding.npy` — Sample embedding.
-- `data/history/` — Per-session JSON conversation logs.
-- `models/emotion2vec/` — Emotion2Vec model directory.
-- `models/checkpoints/bridge_v1.pth` — Trained bridge weights.
-- `static/audio/` — Generated TTS MP3s.
-- `.env` — Inworld API key.
-
-## Dependencies
-
-Listed in `requirements.txt`:
-
-- `torch`, `torchvision`, `torchaudio` — PyTorch ecosystem.
-- `funasr`, `modelscope` — For Emotion2Vec.
-- `librosa`, `numpy`, `pandas`, `soundfile` — Audio processing.
-- `flask`, `requests`, `python-dotenv` — Web and config.
-- `ollama` — LLM interface.
-- `whisper` — Speech recognition.
-
-## Known Caveats
-
-- Requires Inworld API key for TTS.
-- Emotion classifier is prototype with limited synthetic data.
-- Text emotion detection is simple keyword-based.
-- Frontend expects `METADATA|` prefix in stream for emotion display.
-- Whisper and Ollama run locally; ensure sufficient RAM/CPU.
-- Tested on macOS with MPS; adjust device in code for other platforms.
-
-## Troubleshooting
-
-- **Whisper/Ollama not found**: Ensure models are downloaded/installed.
-- **Inworld TTS fails**: Check `.env` key format and API limits.
-- **Training errors**: Verify `models/emotion2vec/` exists and audio files are present.
-- **Audio not recording**: Check browser microphone permissions.
-- **Session history not saving**: Ensure `data/history/` is writable.
-
-## Recommended Next Steps
-
-1. Collect real labeled audio for better emotion training.
-2. Expand synthetic data generation to all 5 emotion classes.
-3. Integrate voice emotion analysis into main app flow.
-4. Add user authentication and session management.
-5. Improve text emotion detection with NLP models.
-6. Add error handling and logging.
-7. Deploy with Docker for easier setup.
-
-## License
-
-This project does not include a license file by default. Add `LICENSE` if you want to specify reuse terms.
+No license file is currently included. Add a LICENSE file if you want explicit reuse terms.
