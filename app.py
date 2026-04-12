@@ -22,18 +22,14 @@ brain = TherapistBrain()
 
 @app.route('/')
 def index():
-    # Every refresh creates a new unique session and a new JSON history file
     session['id'] = str(uuid.uuid4())
     history_file = f"data/history/{session['id']}.json"
-    
-    # Initialize the JSON file with the system prompt
     initial_data = {
         "session_id": session['id'],
         "history": [{"role": "system", "content": brain.system_prompt}]
     }
     with open(history_file, 'w') as f:
         json.dump(initial_data, f, indent=4)
-        
     return render_template('index.html')
 
 @app.route('/process_audio_stream', methods=['POST'])
@@ -44,14 +40,16 @@ def process_audio_stream():
     temp_path = f"data/raw_audio/{session_id}_input.wav"
     audio_file.save(temp_path)
     
+    # Transcription
     user_text = brain.transcribe_audio(temp_path)
-    detected_emotion = brain.detect_emotion(user_text)
+    
+    # New Hybrid Detection (Keywords -> Neural)
+    detected_emotion = brain.detect_emotion_hybrid(user_text, temp_path)
     
     def generate():
+        # Metadata contains the detected emotion for UI color changes
         yield f"METADATA|{user_text}|{detected_emotion}|"
-        
-        # Pass session_id to maintain persistent JSON history
-        for chunk in brain.generate_streaming_response(temp_path, session_id, pre_transcribed_text=user_text):
+        for chunk in brain.generate_streaming_response(user_text, session_id):
             yield chunk
             
     return Response(stream_with_context(generate()), mimetype='text/plain')
@@ -61,41 +59,29 @@ def get_audio():
     data = request.json
     text = data.get('text', '').replace('*', '').replace('[', '').replace(']', '')
     
-    # Hardcoded values as requested: Speed 1.25, Temperature 1.5
-    speed = 1.25
-    temperature = 1.5 
-    
-    # Using a neutral 'calm' prompt prefix for consistent delivery
-    prompt = f"[calm] {text}"
-
-    filename = f"luna_{uuid.uuid4().hex}.mp3"
-    filepath = os.path.join("static/audio", filename)
+    # Per instructions: Speed 1.25, Temperature 1.5 at all times
+    payload = {
+        "text": f"[calm] {text}",
+        "voiceId": "Luna",
+        "modelId": "inworld-tts-1.5-max",
+        "speed": 1.25,
+        "temperature": 1.5
+    }
 
     try:
         url = "https://api.inworld.ai/tts/v1/voice"
-        headers = {
-            "Authorization": f"Basic {INWORLD_KEY}",
-            "Content-Type": "application/json"
-        }
-        
-        payload = {
-            "text": prompt,
-            "voiceId": "Luna",
-            "modelId": "inworld-tts-1.5-max",
-            "speed": speed,
-            "temperature": temperature
-        }
-
+        headers = {"Authorization": f"Basic {INWORLD_KEY}", "Content-Type": "application/json"}
         response = requests.post(url, headers=headers, json=payload, timeout=15)
         
         if response.status_code == 200:
             res_data = response.json()
             audio_bytes = base64.b64decode(res_data['audioContent'])
+            filename = f"luna_{uuid.uuid4().hex}.mp3"
+            filepath = os.path.join("static/audio", filename)
             with open(filepath, "wb") as f:
                 f.write(audio_bytes)
             return jsonify({"audio_url": f"/static/audio/{filename}"})
-        else:
-            return jsonify({"error": f"Inworld Error: {response.text}"}), 500
+        return jsonify({"error": "TTS Failed"}), 500
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
