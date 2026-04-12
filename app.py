@@ -60,20 +60,13 @@ def process_audio_stream():
 def get_audio():
     data = request.json
     text = data.get('text', '').replace('*', '').replace('[', '').replace(']', '')
-    emotion = data.get('emotion', 'Neutral')
     
-    # Constant speed as requested
-    speed = 1.5
-    temperature = 1.1 
+    # Hardcoded values as requested: Speed 1.25, Temperature 1.5
+    speed = 1.25
+    temperature = 1.5 
     
-    if any(e in emotion for e in ["Sad", "Depressed", "Grief"]):
-        prompt = f"[sad] [whispering] [sigh] {text}"
-        temperature = 1.4   
-    elif "Anxious" in emotion:
-        prompt = f"[soothing] [breathe] {text}"
-        temperature = 0.7   
-    else:
-        prompt = f"[calm] {text}"
+    # Using a neutral 'calm' prompt prefix for consistent delivery
+    prompt = f"[calm] {text}"
 
     filename = f"luna_{uuid.uuid4().hex}.mp3"
     filepath = os.path.join("static/audio", filename)
@@ -89,7 +82,7 @@ def get_audio():
             "text": prompt,
             "voiceId": "Luna",
             "modelId": "inworld-tts-1.5-max",
-            "speed": speed, # Now 1.25 for every response
+            "speed": speed,
             "temperature": temperature
         }
 
@@ -108,5 +101,3 @@ def get_audio():
 
 if __name__ == '__main__':
     app.run(port=5000, debug=False, threaded=True)
-
-
