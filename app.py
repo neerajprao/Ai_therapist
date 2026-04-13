@@ -66,7 +66,7 @@ def get_audio():
         subprocess.run([
             'say', 
             '-v', 'Samantha', 
-            '-r', '250', 
+            '-r', '150', 
             '-o', filepath, 
             text
         ], check=True)
