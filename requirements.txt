@@ -1,14 +1,22 @@
+# Core numerics
 torch
-torchvision
-torchaudio
-funasr
-modelscope
-librosa
 numpy
 pandas
+
+# Audio + speech
+librosa
 soundfile
-flask
-requests
+openai-whisper
+
+# Emotion2Vec pipeline
+funasr
+modelscope
+
+# Web app
+Flask
 python-dotenv
 ollama
-whisper
+
+# Torch ecosystem commonly required by audio/model backends
+torchvision
+torchaudio
