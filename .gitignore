@@ -3,4 +3,5 @@ venv/
 __pycache__/
 *.wav
 *.mp3
-history/
+history/custom_model/Emotions.zip
+custom_model/final_emotion_model/model.safetensors

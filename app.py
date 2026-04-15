@@ -10,7 +10,6 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# Directory Setup
 os.makedirs("static/audio", exist_ok=True)
 os.makedirs("data/raw_audio", exist_ok=True)
 os.makedirs("data/history", exist_ok=True)
@@ -43,7 +42,6 @@ def process_audio_stream():
     
     def generate():
         yield f"METADATA|{user_text}|{detected_emotion}|"
-        # CHANGED: Pass the detected_emotion to the LLM generator
         for chunk in brain.generate_streaming_response(user_text, session_id, detected_emotion):
             yield chunk
             
@@ -58,8 +56,7 @@ def get_audio():
     filepath = os.path.join("static/audio", filename)
 
     try:
-        # Changed to Samantha for consistency with macOS voice
-        print(f"Synthesizing locally with macOS 'say': '{text[:30]}...'")
+        print(f"Synthesizing with Samantha: '{text[:30]}...'")
         
         subprocess.run([
             'say', 

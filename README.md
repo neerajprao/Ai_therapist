@@ -1,486 +1,519 @@
 # SoulSync
 
-SoulSync is a local, voice-first therapy-assistant prototype built with Flask. The current runtime records microphone input in the browser, transcribes speech with Whisper, detects emotion with a hybrid text-plus-voice pipeline, streams an LLM response from Ollama, and synthesizes spoken output with the macOS `say` command.
+SoulSync is a local, voice-first therapeutic conversation assistant built with Flask. It records microphone audio in the browser, transcribes speech with Whisper, detects emotion with a hybrid stack (keywords + neural ensemble), streams an LLM reply from Ollama, and synthesizes local speech output on macOS.
 
-This README is written to match the repository exactly as it exists now, including the live web app, the offline training scripts, and the on-disk artifacts already present in the workspace.
+This README is a deep, implementation-accurate snapshot of the project as currently present in this workspace.
 
-## 1. Current Runtime Summary
+## 1) Project At A Glance
 
-The web app path is:
+Current runtime pipeline:
 
-1. Open `GET /`.
-2. A fresh server-side UUID session is created and stored in `session['id']`.
-3. A new conversation file is written to `data/history/<session_id>.json` with the system prompt as the first message.
-4. The browser records microphone audio with `MediaRecorder`.
-5. The audio blob is posted to `POST /process_audio_stream` as `audio`.
-6. The upload is saved to `data/raw_audio/<session_id>_input.wav`.
-7. Whisper transcribes the audio with the `base` model.
-8. Emotion detection runs in two phases:
-   - Phase 1: keyword lookup over large hardcoded word lists.
-   - Phase 2: Emotion2Vec embedding extraction plus the trained bridge classifier.
-9. The assistant response is streamed token-by-token from Ollama `llama3`.
-10. The client collects the full assistant text and calls `POST /get_audio`.
-11. The backend synthesizes speech locally with the macOS `say` command using the `Samantha` voice.
-12. The generated file is served from `static/audio/` and played in the browser.
+1. User opens the web app at GET /.
+2. Backend creates a unique UUID session and initializes session history in data/history/<session_id>.json.
+3. Browser records voice via MediaRecorder.
+4. Audio is posted to POST /process_audio_stream.
+5. Backend stores upload as data/raw_audio/<session_id>_input.wav.
+6. Whisper base model transcribes the audio.
+7. Emotion detection runs with:
+   - silence/energy check
+   - keyword override
+   - neural ensemble fallback (fine-tuned Wav2Vec2 + Emotion2Vec)
+8. Ollama streams response tokens from model llama3.
+9. Frontend requests speech rendering via POST /get_audio.
+10. Backend uses macOS say with Samantha voice to synthesize an m4a file under static/audio.
+11. Frontend plays generated audio and updates UI state.
 
-## 2. Important Behavioral Notes
+## 2) Current Repository Reality
 
-- The app loads `.env` with `python-dotenv`, but the current `app.py` code does not use `INWORLD_KEY` or any other environment value for runtime behavior.
-- `app.secret_key = os.urandom(24)` changes every server restart, so old session cookies stop working after a restart.
-- The current TTS path is local and macOS-specific. It does not use a cloud TTS provider.
-- `POST /get_audio` ignores the submitted `emotion` field. The frontend sends it, but the backend only uses `text`.
-- The live emotion pipeline is not purely neural. `brain.detect_emotion_hybrid(...)` returns a keyword-based label first whenever a keyword matches.
-- The repository contains both live app code and an offline training stack. They are related, but they are not the same execution path.
+Important: repository has evolved significantly from older bridge-only docs.
 
-## 3. Repository Structure
+Current codebase facts:
 
-### 3.1 Core Runtime
+- Active Python source files at project root:
+  - app.py
+  - brain.py
+  - train_emotion.py
+  - transcribe.py
+- Files referenced in older docs such as train_bridge.py, therapist_bot.py, generate_synthetic_data.py, and prep_data.py are not present in this workspace.
+- The active emotion classifier in runtime is a fine-tuned Wav2Vec2 model at custom_model/final_emotion_model, not a separate MLP bridge checkpoint.
+- Emotion2Vec is still used (models/emotion2vec) as part of an ensemble fallback.
 
-- `app.py`
-  - Flask entrypoint.
-  - Creates runtime directories at startup:
-    - `static/audio`
-    - `data/raw_audio`
-    - `data/history`
-  - Defines the app routes:
-    - `GET /`
-    - `POST /process_audio_stream`
-    - `POST /get_audio`
-  - Runs the development server on port `5000` with `debug=False` and `threaded=True`.
-- `brain.py`
-  - `TherapistBrain` orchestrator.
-  - Handles Whisper transcription, hybrid emotion detection, history persistence, and streamed Ollama generation.
+## 3) High-Level Architecture
 
-### 3.2 Training And Offline Inference
+### 3.1 Runtime Components
 
-- `train_emotion.py`
-  - Wraps local Emotion2Vec via FunASR `AutoModel`.
-  - Extracts both labels and embeddings from voice audio.
-- `generate_synthetic_data.py`
-  - Builds synthetic NumPy training arrays from anchor audio files.
-- `train_bridge.py`
-  - Defines and trains the small bridge classifier that maps embeddings to five emotion classes.
-- `therapist_bot.py`
-  - Offline inference wrapper that loads the Emotion2Vec encoder and the trained bridge checkpoint.
-- `transcribe.py`
-  - Standalone Whisper transcription check for a sample file.
-- `prep_data.py`
-  - Creates an empty metadata CSV scaffold.
+- Flask API server: app.py
+- Core inference orchestration: brain.py
+- Frontend: templates/index.html
+- Speech-to-text: openai-whisper (base)
+- LLM generation: ollama chat stream (model llama3)
+- Emotion subsystem:
+  - keyword map
+  - fine-tuned Wav2Vec2ForSequenceClassification
+  - Emotion2Vec via FunASR AutoModel
+- TTS output:
+  - local command line synthesizer say
+  - voice Samantha
+  - output files in static/audio
 
-### 3.3 Frontend
+### 3.2 Data And Model Layers
 
-- `templates/index.html`
-  - Single-page UI.
-  - Recording controls, streaming response handling, emotion theme updates, and audio playback.
+- Session memory persisted per conversation as JSON in data/history.
+- User raw recordings written to data/raw_audio.
+- TTS render artifacts written to static/audio.
+- Fine-tuned classifier weights in custom_model/final_emotion_model/model.safetensors.
+- Emotion2Vec base local model in models/emotion2vec/model.pt (LFS-tracked).
+- Vector DB artifacts present in data/vector_vault (Chroma SQLite + index binaries).
 
-### 3.4 Data And Model Artifacts
+## 4) File-By-File Technical Breakdown
 
-- `data/history.json`
-  - Additional history artifact currently present in the repo.
-- `data/history/`
-  - Per-session conversation files written by the app.
-- `data/raw_audio/`
-  - Uploaded and sample audio files.
-- `data/X_train.npy`
-  - Synthetic bridge input features.
-- `data/y_train.npy`
-  - Synthetic bridge labels.
-- `data/test_embedding.npy`
-  - Saved Emotion2Vec embedding from `train_emotion.py` script mode.
-- `data/vector_vault/`
-  - Chroma database artifact currently checked into the workspace.
-- `models/emotion2vec/`
-  - Local Emotion2Vec model directory.
-- `models/checkpoints/bridge_v1.pth`
-  - Trained bridge checkpoint.
-- `static/speech.aiff`
-  - Static audio asset present in the repo.
-- `static/audio/`
-  - Generated TTS outputs.
+### 4.1 app.py
 
-### 3.5 Project Metadata And Environment Files
+Responsibilities:
 
-- `requirements.txt`
-- `.gitignore`
-- `.gitattributes`
-- `.env`
-- `README_TRAINING.md`
-- `how_to_open.txt`
-- `venv/`
-- `__pycache__/`
-- `.DS_Store`
+- Loads environment variables via python-dotenv load_dotenv().
+- Initializes Flask app and random secret key: os.urandom(24).
+- Ensures runtime directories exist:
+  - static/audio
+  - data/raw_audio
+  - data/history
+- Instantiates TherapistBrain once at startup.
 
-## 4. Runtime File-By-File Details
+Routes:
 
-### 4.1 `app.py`
+1. GET /
+   - creates session id
+   - writes initial history payload:
+     - session_id
+     - history array containing the system prompt
+   - renders templates/index.html
 
-`app.py` is the Flask server.
+2. POST /process_audio_stream
+   - expects multipart file key audio
+   - saves upload as data/raw_audio/<session_id>_input.wav
+   - transcribes via brain.transcribe_audio
+   - detects emotion via brain.detect_emotion_hybrid
+   - streams plain-text response where first emitted block is metadata:
+     - METADATA|<user_text>|<detected_emotion>|
+   - then streams assistant chunks from brain.generate_streaming_response
 
-Behavior:
+3. POST /get_audio
+   - reads JSON body with text
+   - sanitizes characters (*, [, ], and double quote)
+   - writes output filename Samantha_<uuid>.m4a (actual lowercase prefix in code: samantha_)
+   - executes:
 
-1. Calls `load_dotenv()` at startup.
-2. Creates the `static/audio`, `data/raw_audio`, and `data/history` directories if they do not exist.
-3. Imports `TherapistBrain` and creates one `brain` instance.
-4. On `GET /`:
-   - generates a new UUID
-   - stores it in `session['id']`
-   - writes `data/history/<session_id>.json`
-   - renders `templates/index.html`
-5. On `POST /process_audio_stream`:
-   - expects multipart form data with the `audio` file key
-   - saves the file to `data/raw_audio/<session_id>_input.wav`
-   - transcribes it with Whisper
-   - detects emotion with the hybrid pipeline
-   - streams metadata first, then assistant text chunks
-6. On `POST /get_audio`:
-   - reads JSON body text from `request.json`
-   - sanitizes the text by removing `*`, `[` and `]`, and replacing `"` with `'`
-   - writes an `.m4a` file in `static/audio/`
-   - invokes macOS `say -v Samantha -r 150 -o <file>`
-   - returns `{"audio_url": "/static/audio/<filename>"}` on success
-   - returns HTTP 500 with JSON error on failure
+```bash
+say -v Samantha -r 150 -o static/audio/<file>.m4a "<text>"
+```
 
-Stream format from `/process_audio_stream`:
+   - returns JSON audio_url on success
+   - returns JSON error + HTTP 500 on failure
 
-- The first chunk is always:
-  - `METADATA|<transcribed_text>|<detected_emotion>|`
-- The rest of the stream is the generated assistant text.
+Server launch behavior:
 
-### 4.2 `brain.py`
+```bash
+python app.py
+```
 
-`brain.py` contains the runtime logic behind the web app.
+Runs Flask on port 5000 with debug=False and threaded=True.
+
+### 4.2 brain.py
+
+Core class: TherapistBrain
 
 Initialization:
 
-- Selects `mps` if available, otherwise `cpu`.
-- Loads Whisper `base`.
-- Instantiates `EmotionProcessor()` from `train_emotion.py`.
-- Instantiates `TherapistBridge(input_dim=1024, num_classes=5)` from `train_bridge.py`.
-- Loads `models/checkpoints/bridge_v1.pth` if it exists.
-- Sets the Ollama model name to `llama3`.
-- Defines the system prompt used for the therapist persona.
-- Defines the keyword map for `Sad`, `Anxious`, `Angry`, and `Happy`.
+- Device selection: mps if available else cpu.
+- Loads Whisper base model.
+- Loads fine-tuned Wav2Vec2 classifier and feature extractor from:
+  - custom_model/final_emotion_model
+- Loads Emotion2Vec wrapper from train_emotion.py.
+- Sets emotion id map:
+  - 0 Happy
+  - 1 Sad
+  - 2 Angry
+  - 3 Neutral
+  - 4 Anxious
+- Defines therapist prompt persona (Samantha).
+- Defines large keyword dictionaries for Sad, Anxious, Angry, Happy.
 
-Methods:
+Method behavior:
 
-- `transcribe_audio(audio_path)`
-  - returns an empty string if the file does not exist
-  - calls Whisper with `fp16=False`
-  - returns the stripped transcript
-- `detect_emotion_hybrid(text, audio_path)`
-  - lowercases the text
-  - checks the keyword map first
-  - if no keyword matches, extracts an Emotion2Vec embedding and runs the bridge model
-  - maps bridge output classes as follows:
-    - `0 -> Anxious`
-    - `1 -> Sad`
-    - `2 -> Angry`
-    - `3 -> Neutral`
-    - `4 -> Happy`
-  - returns `Neutral` on any exception in the fallback path
-- `_get_history(session_id)`
-  - loads `data/history/<session_id>.json` if present
-  - otherwise returns a default history containing only the system prompt
-- `_save_history(session_id, history)`
-  - writes the full history back to disk as JSON
-- `generate_streaming_response(user_input, session_id)`
-  - yields a fallback line if `user_input` is empty
-  - loads history and appends the user message
-  - calls `ollama.chat(..., stream=True)`
-  - strips bracketed or starred stage-direction-like text from each streamed chunk
-  - yields cleaned text incrementally
-  - saves the final assistant message to history after streaming completes
+1. transcribe_audio(audio_path)
+   - returns empty string if missing file
+   - Whisper transcribe with fp16=False
 
-### 4.3 `templates/index.html`
+2. detect_emotion_hybrid(text, audio_path)
+   - Stage A: silence gate using librosa RMS; returns Neutral for low-energy input
+   - Stage B: keyword check on lowercased transcript
+   - Stage C: neural ensemble fallback
+     - Wav2Vec2 probability vector from audio features
+     - Emotion2Vec label scores projected into fixed class order
+     - weighted fusion:
 
-The frontend is a single HTML page with Tailwind CDN styling and an imported Google Font.
+$$
+P_{final} = 0.6 \cdot P_{wav2vec2} + 0.4 \cdot P_{emotion2vec}
+$$
 
-Behavior:
+     - argmax picks final class
+   - any exception in neural stage returns Neutral
 
-1. Shows a centered recording interface with a microphone button.
-2. Uses the `MediaRecorder` API to capture microphone audio.
-3. On stop, packages the recording as a blob labeled `audio/wav` and sends it to `/process_audio_stream`.
-4. Reads the streamed response with a `ReadableStream` reader.
-5. Parses the metadata prefix using `METADATA|...|...|`.
-6. Updates the displayed transcript snippet and detected emotion.
-7. Switches the emotion card theme based on the emotion label substring.
-8. Collects the full assistant response text.
-9. Posts that text to `/get_audio`.
-10. Plays the returned audio file with a cache-busting timestamp query string.
-11. Updates the status text through `Ready`, `Listening...`, `Processing...`, and `Error`.
+3. _get_history(session_id)
+   - reads data/history/<session_id>.json if available
+   - otherwise returns single system message
 
-Important frontend/backend mismatch:
+4. _save_history(session_id, history)
+   - writes full JSON history object with session_id and history
 
-- The frontend sends `{ text, emotion }` to `/get_audio`, but the backend only uses `text`.
+5. generate_streaming_response(user_input, session_id, detected_emotion=None)
+   - handles empty/very-short quiet input with fallback greeting
+   - formats user content with tone tag:
+     - [User Tone: <emotion>] <text>
+   - calls ollama.chat(..., stream=True)
+   - strips stage/action patterns from streamed chunks using regex
+   - yields cleaned chunks incrementally
+   - appends assistant reply to persistent session history
 
-### 4.4 `train_emotion.py`
+### 4.3 train_emotion.py
 
-`train_emotion.py` provides the Emotion2Vec wrapper.
+Purpose:
 
-Behavior:
+- Thin local wrapper around FunASR Emotion2Vec model.
 
-- Selects `mps` if available, otherwise `cpu`.
-- Loads the local model from `models/emotion2vec`.
-- Uses `AutoModel(..., disable_update=True)` so the model stays local and offline.
-- `get_results(audio_path)` returns a pair:
-  - `labels_dict`: mapping from label string to score
-  - `embeddings`: NumPy array of the feature vector
-- If the audio file does not exist, it returns `(None, None)`.
+Key behaviors:
 
-Script mode (`python train_emotion.py`):
+- Uses device mps/cpu.
+- Loads local model folder models/emotion2vec with disable_update=True for offline use.
+- get_results(audio_path) returns tuple:
+  - labels_dict: label -> score
+  - embeddings: numpy array of feats
+- If file missing, returns (None, None).
 
-1. Reads `data/raw_audio/test.wav`.
-2. Prints the top emotion and its confidence.
-3. Prints the embedding shape and preview.
-4. Saves the embedding to `data/test_embedding.npy`.
+Script mode behavior:
 
-### 4.5 `generate_synthetic_data.py`
+- test file expected: data/raw_audio/test.wav
+- prints top emotion and confidence
+- prints embedding shape and preview
+- saves embeddings to data/test_embedding.npy
 
-This script builds the synthetic training set for the bridge classifier.
+### 4.4 transcribe.py
 
-Hardcoded anchors:
+Purpose:
 
-- `data/raw_audio/test.wav -> 4`
-- `data/raw_audio/sad.wav -> 1`
+- Standalone smoke test wrapper around Whisper.
 
 Behavior:
 
-1. Instantiates `EmotionProcessor`.
-2. For each anchor file that exists, extracts its embedding.
-3. Creates 100 noisy variants per file with Gaussian noise `N(0, 0.02)`.
-4. Appends all samples to `X` and labels to `y`.
-5. Saves:
-   - `data/X_train.npy`
-   - `data/y_train.npy`
+- Loads Whisper base on mps/cpu.
+- transcribe(audio_path) returns cleaned transcript string.
+- Script mode tests data/raw_audio/sad.wav.
 
-Important consequence:
+### 4.5 templates/index.html
 
-- The default synthetic dataset only contains two labels, even though the bridge output space has five classes.
+Frontend behavior details:
 
-### 4.6 `train_bridge.py`
+- Tailwind CDN + custom CSS glassmorphism UI.
+- Uses Inter font from Google Fonts.
+- Main control: single record button toggles start/stop.
+- MediaRecorder captures browser microphone stream.
+- Sends Blob as audio/wav to backend.
+- Reads streaming response via ReadableStream reader.
+- Parses metadata header from first response chunk.
+- Updates emotion badge and dynamic card style by emotion category.
+- Requests synthesized audio from /get_audio.
+- Plays returned audio URL with cache-busting timestamp query.
 
-This script trains the small MLP bridge.
+UI state labels:
 
-Model:
+- Ready
+- Listening...
+- Processing...
+- Error
 
-- `TherapistBridge(input_dim=1024, num_classes=5)`
-- Architecture:
-  - `Linear(1024, 256)`
-  - `ReLU`
-  - `Dropout(0.2)`
-  - `Linear(256, 5)`
-  - `LogSoftmax(dim=1)`
+Known API mismatch:
 
-Training:
+- Frontend sends { text, emotion } to /get_audio.
+- Backend currently uses text only.
 
-- Loads `data/X_train.npy` and `data/y_train.npy`.
-- Uses `mps` if available, otherwise `cpu`.
-- Uses `Adam(lr=0.001)`.
-- Uses `NLLLoss`.
-- Trains for 50 epochs.
-- Prints loss every 10 epochs.
-- Saves the checkpoint to `models/checkpoints/bridge_v1.pth`.
+### 4.6 requirements.txt
 
-Failure behavior:
+Declared dependencies:
 
-- If `data/X_train.npy` does not exist, the script prints an error and returns without training.
+- torch
+- numpy
+- pandas
+- librosa
+- soundfile
+- openai-whisper
+- funasr
+- modelscope
+- Flask
+- python-dotenv
+- ollama
+- torchvision
+- torchaudio
 
-### 4.7 `therapist_bot.py`
+Note:
 
-This is the offline inference wrapper.
+- brain.py imports transformers (Wav2Vec2 classes), but transformers is not listed in requirements.txt. A fresh environment may require manual install of transformers.
 
-Behavior:
+### 4.7 README_TRAINING.md
 
-1. Loads `EmotionProcessor`.
-2. Loads `TherapistBridge` from `models/checkpoints/bridge_v1.pth`.
-3. Converts the embedding to shape `(1, 1024)`.
-4. Runs inference through the bridge.
-5. Maps the prediction using `EMOTION_MAP`:
-   - `0 -> Anxious/Stressed`
-   - `1 -> Sad/Depressed`
-   - `2 -> Angry/Frustrated`
-   - `3 -> Neutral/Calm`
-   - `4 -> Happy/Stable`
+Contains a training-oriented write-up, but parts are from an older bridge-based architecture and should be treated as historical context unless synchronized with current files.
 
-Important detail:
+### 4.8 how_to_open.txt
 
-- Unlike `brain.py`, this script does not have a checkpoint existence guard, so a missing `bridge_v1.pth` will raise when it tries to load the weights.
-
-### 4.8 `transcribe.py`
-
-This is a standalone Whisper smoke test.
-
-Behavior:
-
-- Loads Whisper `base`.
-- Moves the model to `mps` if available, otherwise `cpu`.
-- Transcribes `data/raw_audio/sad.wav`.
-- Prints the transcript.
-
-### 4.9 `prep_data.py`
-
-This script creates an empty metadata CSV scaffold.
-
-Output:
-
-- `data/metadata.csv`
-
-Columns:
-
-- `file_path`
-- `label`
-
-Current state:
-
-- No other script in the repository reads this CSV yet.
-
-## 5. Complete File Inventory
-
-This repository currently contains the following project-owned files and directories:
-
-- `.env`
-  - Local environment variables loaded by `app.py`.
-  - Present in the workspace but ignored by Git.
-- `.gitignore`
-  - Ignores `.env`, `venv/`, `__pycache__/`, `*.wav`, `*.mp3`, and `history/`.
-  - Note: the app uses `data/history/`, not a root-level `history/` directory.
-- `.gitattributes`
-  - Marks `models/emotion2vec/model.pt` for Git LFS with `filter=lfs diff=lfs merge=lfs -text`.
-- `.DS_Store`
-  - macOS Finder metadata file; not part of the app.
-- `README.md`
-  - Main repository documentation.
-- `README_TRAINING.md`
-  - Training/offline pipeline documentation.
-- `app.py`
-  - Flask web app.
-- `brain.py`
-  - Live runtime brain/orchestrator.
-- `generate_synthetic_data.py`
-  - Synthetic bridge dataset generator.
-- `how_to_open.txt`
-  - Minimal startup note with activation and launch commands.
-- `prep_data.py`
-  - CSV scaffold generator.
-- `requirements.txt`
-  - Python dependencies.
-- `therapist_bot.py`
-  - Offline voice-state inference script.
-- `train_bridge.py`
-  - Bridge classifier trainer.
-- `train_emotion.py`
-  - Emotion2Vec wrapper and embedding extractor.
-- `transcribe.py`
-  - Standalone transcription test.
-- `templates/index.html`
-  - Web UI.
-- `static/speech.aiff`
-  - Static audio file.
-- `static/audio/`
-  - Generated speech output directory.
-- `data/history.json`
-  - Extra history artifact.
-- `data/history/`
-  - Per-session history JSON files.
-- `data/raw_audio/`
-  - Captured audio files and sample anchors.
-- `data/test_embedding.npy`
-  - Saved embedding from the Emotion2Vec script.
-- `data/X_train.npy`
-  - Synthetic training features.
-- `data/y_train.npy`
-  - Synthetic training labels.
-- `data/vector_vault/`
-  - Chroma DB artifacts.
-- `models/checkpoints/bridge_v1.pth`
-  - Trained bridge checkpoint.
-- `models/emotion2vec/`
-  - Local Emotion2Vec model files.
-- `venv/`
-  - Local virtual environment.
-- `__pycache__/`
-  - Python bytecode cache.
-
-## 6. Data Snapshot Present In This Workspace
-
-The workspace currently includes:
-
-- a populated `data/history/` directory with many session JSON files
-- a populated `data/raw_audio/` directory with sample and session audio files
-- a populated `static/audio/` directory with generated TTS outputs
-- a `data/vector_vault/` directory containing a Chroma SQLite database and index files
-
-These are runtime artifacts, not source code, and they may grow as the app is used.
-
-## 7. Setup And Run
-
-### 7.1 Local Environment
-
-Use a Python virtual environment and install the requirements:
+Current startup notes:
 
 ```bash
-python3 -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+python3 app.py
 ```
 
-### 7.2 Required Runtime Dependencies
+## 5) Models And Training Assets
 
-The live app expects all of the following to be available:
+### 5.1 Fine-Tuned Emotion Classifier
 
-- macOS, because the TTS path uses `say`
+Path: custom_model/final_emotion_model
+
+Files:
+
+- config.json
+- preprocessor_config.json
+- model.safetensors
+
+Important config points from config.json:
+
+- architecture: Wav2Vec2ForSequenceClassification
+- num labels: 5 (happy, sad, angry, neutral, anxious)
+- hidden size: 768
+- transformers_version: 5.5.4
+
+Important preprocessor points:
+
+- sampling_rate: 16000
+- do_normalize: true
+- return_attention_mask: false
+
+### 5.2 Emotion2Vec Base Model
+
+Path: models/emotion2vec
+
+Files:
+
+- config.yaml
+- configuration.json
+- model.pt
+- tokens.txt
+
+Model details in local metadata:
+
+- task: emotion-recognition
+- framework: pytorch
+- model_name_in_hub.ms: iic/emotion2vec_base
+- embed_dim (from config.yaml): 1024
+- supported modality: AUDIO
+
+### 5.3 Training Notebook
+
+Path: custom_model/train.ipynb
+
+Notebook workflow summary:
+
+1. Installs seaborn.
+2. Loads dataset and maps emotions to 5-class target_map.
+3. Uses librosa for manual loading/resampling at 16kHz.
+4. Uses Hugging Face Dataset + Wav2Vec2FeatureExtractor preprocessing.
+5. Fine-tunes facebook/wav2vec2-base-960h with Trainer.
+6. Uses train/validation split with stratification.
+7. Evaluates accuracy and plots confusion matrix + training curves.
+8. Saves final model to custom_model/final_emotion_model.
+9. Includes standalone local inference test cells.
+
+## 6) Dataset Inventory
+
+Primary labeled dataset root:
+
+- custom_model/Emotions
+
+Observed file counts by class directory:
+
+- Angry: 2167
+- Disgusted: 1863
+- Fearful: 2047
+- Happy: 2167
+- Neutral: 1795
+- Sad: 2167
+- Suprised: 592
+
+Total files under custom_model directory: 12805
+
+Notes:
+
+- The folder name Suprised is intentionally spelled as present in workspace.
+- Training notebook maps a five-emotion target subset for the deployed classifier.
+
+## 7) Runtime Data Artifacts
+
+### 7.1 data directory
+
+Contains:
+
+- history/ (55 JSON session files currently present)
+- raw_audio/ (4 wav files currently present)
+- test_embedding.npy
+- vector_vault/
+
+### 7.2 Session history schema
+
+Each file in data/history follows this shape:
+
+```json
+{
+  "session_id": "<uuid>",
+  "history": [
+    {"role": "system", "content": "..."},
+    {"role": "user", "content": "..."},
+    {"role": "assistant", "content": "..."}
+  ]
+}
+```
+
+### 7.3 Vector vault contents
+
+data/vector_vault contains:
+
+- chroma.sqlite3
+- d6712cb2-30b1-4829-af87-8fe9b169ae7d/data_level0.bin
+- d6712cb2-30b1-4829-af87-8fe9b169ae7d/header.bin
+- d6712cb2-30b1-4829-af87-8fe9b169ae7d/length.bin
+- d6712cb2-30b1-4829-af87-8fe9b169ae7d/link_lists.bin
+
+### 7.4 static directory
+
+Contains:
+
+- static/speech.aiff
+- static/audio/ with generated files (62 currently present)
+
+Observed filenames include legacy prefixes from older experiments (bark_, luna_) and current Samantha outputs (samantha_*.m4a).
+
+## 8) Operational Setup
+
+### 8.1 Prerequisites
+
+- macOS (required for current say-based TTS path)
+- Python virtual environment
 - Ollama installed and running locally
-- the `llama3` model pulled locally
-- the local Emotion2Vec directory under `models/emotion2vec/`
-
-Useful Ollama setup command:
+- Local Ollama model available:
 
 ```bash
 ollama pull llama3
 ```
 
-### 7.3 Start The App
+### 8.2 Install Dependencies
 
 ```bash
-python3 app.py
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install -r requirements.txt
+pip install transformers
 ```
 
-Then open:
-
-- `http://127.0.0.1:5000`
-
-## 8. Script Commands
+### 8.3 Run App
 
 ```bash
-python prep_data.py
-python train_emotion.py
-python generate_synthetic_data.py
-python train_bridge.py
-python therapist_bot.py
-python transcribe.py
+source venv/bin/activate
+python app.py
 ```
 
-## 9. Current Limitations And Operational Risks
+Open http://127.0.0.1:5000
 
-1. The default synthetic bridge dataset only covers two labels.
-2. There is no train/validation/test split.
-3. There is no reproducibility seed for the synthetic augmentation.
-4. The neural fallback in `brain.py` uses a broad `except`, which can hide real failures.
-5. The bridge classifier is trained full-batch on a tiny synthetic dataset.
-6. The frontend sends an `emotion` field to `/get_audio`, but the backend ignores it.
-7. The TTS implementation depends on the macOS `say` binary, so it is not portable as-is.
-8. `app.secret_key` is regenerated on each server restart, so sessions do not survive restarts.
-9. `models/emotion2vec/model.pt` is stored with Git LFS, so clones need LFS support to fetch it correctly.
+## 9) API Contracts
 
-## 10. Change Surface Worth Watching
+### 9.1 POST /process_audio_stream
 
-If you change any of the following, update this README as well:
+Request:
 
-- the keyword lists or emotion labels in `brain.py`
-- the model name in `brain.py`
-- the bridge architecture in `train_bridge.py`
-- the Emotion2Vec model path in `train_emotion.py`
-- the TTS voice or command in `app.py`
-- the frontend metadata parsing in `templates/index.html`
-- the contents of `models/emotion2vec/`
-- the checkpoint path in `models/checkpoints/`
+- multipart/form-data
+- required file field: audio
+
+Response:
+
+- content-type text/plain stream
+- first payload block:
+  - METADATA|<transcript>|<emotion>|
+- remainder:
+  - assistant text chunks
+
+### 9.2 POST /get_audio
+
+Request JSON:
+
+```json
+{
+  "text": "assistant response text",
+  "emotion": "optional/ignored by backend currently"
+}
+```
+
+Success response:
+
+```json
+{
+  "audio_url": "/static/audio/samantha_<id>.m4a"
+}
+```
+
+Failure response:
+
+```json
+{
+  "error": "..."
+}
+```
+
+## 10) Known Gaps, Risks, And Behavioral Edge Cases
+
+1. requirements.txt does not currently include transformers although runtime imports it.
+2. app.secret_key is regenerated on each restart, invalidating old session cookies.
+3. /get_audio is macOS-specific because it depends on say.
+4. /get_audio sanitizes text but still executes system TTS command; keep text lengths practical.
+5. Any exception in neural emotion stage falls back to Neutral.
+6. Legacy artifacts (history prompts, old audio prefixes) coexist with current Samantha runtime.
+7. .gitignore excludes history/ but app writes data/history/; generated JSON session logs remain in repo workspace unless separately cleaned.
+8. Repository is large (over 71k files), primarily due to dataset and environment artifacts.
+
+## 11) Full Top-Level Inventory (Current Workspace)
+
+- .DS_Store
+- .env
+- .gitattributes
+- .gitignore
+- app.py
+- brain.py
+- custom_model/
+- data/
+- how_to_open.txt
+- models/
+- README.md
+- README_TRAINING.md
+- requirements.txt
+- static/
+- templates/
+- train_emotion.py
+- transcribe.py
+- venv/
+- __pycache__/
+
+## 12) Evolution Notes (For Maintainers)
+
+The project contains evidence of multiple development phases:
+
+- Early/alternate persona and TTS naming (Luna, bark) in artifacts.
+- Current production code persona and TTS pathway: Samantha + macOS say.
+- Old bridge-model documentation remains in README_TRAINING.md, while current active implementation in brain.py uses Wav2Vec2 + Emotion2Vec ensemble.
+
+When making future changes, keep docs synchronized with app.py and brain.py first, then update training docs and artifact notes.
