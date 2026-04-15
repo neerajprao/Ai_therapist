@@ -43,7 +43,8 @@ def process_audio_stream():
     
     def generate():
         yield f"METADATA|{user_text}|{detected_emotion}|"
-        for chunk in brain.generate_streaming_response(user_text, session_id):
+        # CHANGED: Pass the detected_emotion to the LLM generator
+        for chunk in brain.generate_streaming_response(user_text, session_id, detected_emotion):
             yield chunk
             
     return Response(stream_with_context(generate()), mimetype='text/plain')
@@ -53,16 +54,13 @@ def get_audio():
     data = request.json
     text = data.get('text', '').replace('*', '').replace('[', '').replace(']', '').replace('"', "'")
     
-    filename = f"luna_{uuid.uuid4().hex}.m4a"
+    filename = f"samantha_{uuid.uuid4().hex}.m4a"
     filepath = os.path.join("static/audio", filename)
 
     try:
+        # Changed to Samantha for consistency with macOS voice
         print(f"Synthesizing locally with macOS 'say': '{text[:30]}...'")
         
-        # Using the native macOS 'say' command:
-        # -v Samantha: Use the Samantha voice
-        # -r 250: Set the rate (speed)
-        # -o: Output to file
         subprocess.run([
             'say', 
             '-v', 'Samantha', 
@@ -71,14 +69,13 @@ def get_audio():
             text
         ], check=True)
 
-        # Confirm file exists
         if os.path.exists(filepath):
             return jsonify({"audio_url": f"/static/audio/{filename}"})
         else:
-            return jsonify({"error": "macOS say command failed to create file"}), 500
+            return jsonify({"error": "TTS failed"}), 500
 
     except Exception as e:
-        print(f"!!! LOCAL TTS CRASH: {str(e)}")
+        print(f"!!! TTS CRASH: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
