@@ -96,7 +96,7 @@ class TherapistBrain:
         return result['text'].strip()
 
     def detect_emotion_hybrid(self, text, audio_path):
-        # 1. Static/Silence Check
+        # 1. Static/Silence Check (Energy-based)
         try:
             y, sr = librosa.load(audio_path, sr=16000)
             rms = librosa.feature.rms(y=y)[0]
@@ -107,12 +107,16 @@ class TherapistBrain:
             print(f"Energy check error: {e}")
 
         # 2. Keyword Check
-        clean_text = text.lower()
+        clean_text = text.lower().strip()
         for emotion, keywords in self.keyword_map.items():
             if any(word in clean_text for word in keywords):
                 return emotion
+        
+        # 3. Text Length Gate (Prevents noise from being sent to Neural Ensemble)
+        if len(clean_text) < 2:
+            return "Neutral"
 
-        # 3. Neural Ensemble
+        # 4. Neural Ensemble (The fallback for active speech)
         try:
             # Wav2Vec2
             speech, _ = librosa.load(audio_path, sr=16000)
@@ -120,7 +124,6 @@ class TherapistBrain:
             with torch.no_grad():
                 w2v_logits = self.w2v_model(**inputs).logits
                 w2v_probs = F.softmax(w2v_logits, dim=-1).cpu().numpy()[0] 
-                # here is the prob distribution for all 5 emotions
 
             # Emotion2Vec
             e2v_labels, _ = self.e2v_processor.get_results(audio_path)
@@ -152,7 +155,7 @@ class TherapistBrain:
             json.dump({"session_id": session_id, "history": history}, f, indent=4)
 
     def generate_streaming_response(self, user_input, session_id, detected_emotion=None):
-        # Static/Empty input prompt
+        # Empty input handling
         if not user_input or (len(user_input.strip()) < 2 and detected_emotion == "Neutral"):
             yield "Hello, I'm Samantha... I noticed it's a bit quiet on your end. How are you feeling this wonderful day?"
             return
