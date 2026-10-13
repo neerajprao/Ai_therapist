@@ -1,7 +1,44 @@
+# Secrets
 .env
+.env.*
+!.env.example
+
+# Environments and caches
+.venv/
 venv/
 __pycache__/
+*.pyc
+.pytest_cache/
+.ipynb_checkpoints/
+.DS_Store
+
+# User data: never commit conversations, recordings or vector stores
+data/
+static/audio/
 *.wav
 *.mp3
-history/custom_model/Emotions.zip
-custom_model/final_emotion_model/model.safetensors
+*.m4a
+*.aiff
+*.webm
+*.ogg
+*.flac
+
+# Datasets
+custom_model/Emotions/
+custom_model/Emotions.zip
+training/cache/
+
+# Model weights and training runs (large files go to the Hugging Face Hub)
+*.safetensors
+*.pt
+*.pth
+*.bin
+*.onnx
+*.npy
+training/runs/
+models/emotion2vec/model.pt
+
+# Evaluation fixtures are synthetic text and are tracked
+!eval/data/
+!eval/results/
+!training/splits/
