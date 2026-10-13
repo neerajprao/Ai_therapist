@@ -1,0 +1,9 @@
+files: 12798 (unparsed: 0)
+per corpus: {'RAVDESS': 2076, 'CREMA-D': 7442, 'TESS': 2800, 'SAVEE': 480}
+speakers: {'CREMA-D': 91, 'RAVDESS': 24, 'SAVEE': 4, 'TESS': 2} total 121
+5-class totals: {'angry': 2107, 'anxious': 2107, 'happy': 2107, 'neutral': 1795, 'sad': 2107}
+5-class speech only: {'angry': 1923, 'anxious': 1923, 'happy': 1923, 'neutral': 1703, 'sad': 1923}
+dropped: {'disgusted': 1923, 'surprised': 652}
+folder/filename label mismatches: {'count': 405, 'by_corpus': {'SAVEE': 405}}
+duplicate audio groups: 4
+index written to training/splits/dataset_index.csv

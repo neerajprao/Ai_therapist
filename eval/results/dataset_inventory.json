@@ -1,0 +1,186 @@
+{
+  "total_wav_files": 12798,
+  "unparsed_files": [],
+  "files_per_folder": {
+    "Angry": 2167,
+    "Disgusted": 1863,
+    "Fearful": 2047,
+    "Happy": 2167,
+    "Neutral": 1795,
+    "Sad": 2167,
+    "Suprised": 592
+  },
+  "files_per_corpus": {
+    "RAVDESS": 2076,
+    "CREMA-D": 7442,
+    "TESS": 2800,
+    "SAVEE": 480
+  },
+  "corpus_by_source_emotion": {
+    "CREMA-D": {
+      "angry": 1271,
+      "disgusted": 1271,
+      "fearful": 1271,
+      "happy": 1271,
+      "neutral": 1087,
+      "sad": 1271
+    },
+    "RAVDESS": {
+      "angry": 376,
+      "disgusted": 192,
+      "fearful": 376,
+      "happy": 376,
+      "neutral": 188,
+      "sad": 376,
+      "surprised": 192
+    },
+    "SAVEE": {
+      "angry": 60,
+      "disgusted": 60,
+      "fearful": 60,
+      "happy": 60,
+      "neutral": 120,
+      "sad": 60,
+      "surprised": 60
+    },
+    "TESS": {
+      "angry": 400,
+      "disgusted": 400,
+      "fearful": 400,
+      "happy": 400,
+      "neutral": 400,
+      "sad": 400,
+      "surprised": 400
+    }
+  },
+  "corpus_by_label5": {
+    "CREMA-D": {
+      "(dropped)": 1271,
+      "angry": 1271,
+      "anxious": 1271,
+      "happy": 1271,
+      "neutral": 1087,
+      "sad": 1271
+    },
+    "RAVDESS": {
+      "(dropped)": 384,
+      "angry": 376,
+      "anxious": 376,
+      "happy": 376,
+      "neutral": 188,
+      "sad": 376
+    },
+    "SAVEE": {
+      "(dropped)": 120,
+      "angry": 60,
+      "anxious": 60,
+      "happy": 60,
+      "neutral": 120,
+      "sad": 60
+    },
+    "TESS": {
+      "(dropped)": 800,
+      "angry": 400,
+      "anxious": 400,
+      "happy": 400,
+      "neutral": 400,
+      "sad": 400
+    }
+  },
+  "corpus_by_channel": {
+    "CREMA-D": {
+      "speech": 7442
+    },
+    "RAVDESS": {
+      "song": 828,
+      "speech": 1248
+    },
+    "SAVEE": {
+      "speech": 480
+    },
+    "TESS": {
+      "speech": 2800
+    }
+  },
+  "label5_totals": {
+    "angry": 2107,
+    "anxious": 2107,
+    "happy": 2107,
+    "neutral": 1795,
+    "sad": 2107
+  },
+  "label5_totals_speech_only": {
+    "angry": 1923,
+    "anxious": 1923,
+    "happy": 1923,
+    "neutral": 1703,
+    "sad": 1923
+  },
+  "dropped_by_source_emotion": {
+    "disgusted": 1923,
+    "surprised": 652
+  },
+  "speakers_per_corpus": {
+    "CREMA-D": 91,
+    "RAVDESS": 24,
+    "SAVEE": 4,
+    "TESS": 2
+  },
+  "total_speakers": 121,
+  "clips_per_speaker_label5": {
+    "min": 36,
+    "max": 1000,
+    "largest": {
+      "tess_OAF": 1000,
+      "tess_YAF": 1000,
+      "savee_in_Angry": 90,
+      "savee_in_Happy": 90,
+      "savee_in_Neutral": 90,
+      "savee_in_Sad": 90
+    }
+  },
+  "folder_label_mismatches": {
+    "count": 405,
+    "by_corpus": {
+      "SAVEE": 405
+    }
+  },
+  "exact_duplicate_audio": {
+    "groups": 4,
+    "files_involved": 8,
+    "cross_speaker_groups": 0,
+    "conflicting_label_groups": 3,
+    "examples": [
+      [
+        "Angry/1017_IWW_ANG_XX.wav",
+        "Fearful/1017_IWW_FEA_XX.wav"
+      ],
+      [
+        "Disgusted/1013_WSI_DIS_XX.wav",
+        "Sad/1013_WSI_SAD_XX.wav"
+      ],
+      [
+        "Happy/03-01-03-01-02-01-07.wav",
+        "Happy/03-01-03-01-02-02-07.wav"
+      ],
+      [
+        "Happy/1006_TIE_HAP_XX.wav",
+        "Neutral/1006_TIE_NEU_XX.wav"
+      ]
+    ]
+  },
+  "duration_seconds_label5": {
+    "min": 1.254,
+    "median": 2.469,
+    "p95": 4.538,
+    "max": 7.139,
+    "share_longer_than_3s": 0.2764
+  },
+  "samplerates": {
+    "48000": 2076,
+    "16000": 7442,
+    "24414": 2799,
+    "44100": 480,
+    "96000": 1
+  }
+}

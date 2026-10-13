@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulSync | Voice companion demo</title>
+    <style>
+        :root {
+            --bg: #020617; --panel: rgba(15, 23, 42, 0.7); --line: rgba(255, 255, 255, 0.1);
+            --text: #e2e8f0; --muted: #64748b; --accent: #60a5fa;
+            --tone: #3b82f6; --tone-bg: rgba(59, 130, 246, 0.1); --tone-text: #60a5fa;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+            font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .wrap { max-width: 48rem; margin: 0 auto; padding: 3rem 1.5rem 4rem; }
+        header { text-align: center; margin-bottom: 2.5rem; }
+        h1 {
+            margin: 0; font-size: 3rem; font-weight: 800; letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #818cf8, #60a5fa, #34d399);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .tagline { color: var(--muted); margin-top: 1rem; font-size: 1.1rem; font-style: italic; }
+        .glass { background: var(--panel); backdrop-filter: blur(16px); border: 1px solid var(--line); }
+        .notice { border-radius: 1rem; padding: 1rem 1.25rem; font-size: 0.85rem; line-height: 1.5; color: #cbd5e1; margin-bottom: 2rem; }
+        .notice strong { color: #fbbf24; }
+        .notice details { margin-top: 0.5rem; }
+        .notice summary { cursor: pointer; color: var(--accent); }
+        .notice ul { margin: 0.5rem 0 0; padding-left: 1.2rem; }
+        .recorder { border-radius: 2rem; padding: 2.5rem; text-align: center; }
+        #recordBtn {
+            width: 7rem; height: 7rem; border-radius: 50%; background: #1e293b; border: 1px solid #334155;
+            display: flex; align-items: center; justify-content: center; margin: 0 auto; cursor: pointer;
+            transition: all 0.2s;
+        }
+        #recordBtn svg { width: 3rem; height: 3rem; color: var(--accent); }
+        #recordBtn.active { animation: pulse 2s infinite; background: #ef4444; }
+        #recordBtn.active svg { color: #fff; }
+        #recordBtn:disabled { opacity: 0.5; cursor: wait; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        #status { margin-top: 2rem; font-size: 0.75rem; font-weight: 700; color: var(--muted); letter-spacing: 0.2em; text-transform: uppercase; }
+        #error { margin-top: 0.75rem; font-size: 0.85rem; color: #f87171; min-height: 1.2em; }
+        #resultArea { margin-top: 2rem; display: grid; gap: 1.5rem; }
+        #resultArea[hidden] { display: none; }
+        #emotionCard { border-radius: 1rem; padding: 1.5rem; border-left: 4px solid var(--tone); transition: all 0.5s; }
+        .label { font-size: 0.65rem; font-weight: 900; color: var(--muted); letter-spacing: 0.15em; text-transform: uppercase; margin: 0 0 0.75rem; }
+        #userSaid { font-size: 0.9rem; color: #94a3b8; font-style: italic; }
+        #emotion {
+            display: inline-block; margin-top: 0.75rem; padding: 0.25rem 0.75rem; font-size: 0.75rem; font-weight: 700;
+            border-radius: 999px; border: 1px solid var(--tone); background: var(--tone-bg); color: var(--tone-text); transition: all 0.5s;
+        }
+        #aiCard { border-radius: 1.5rem; padding: 2rem; }
+        #aiResponse { margin: 0; font-size: 1.25rem; line-height: 1.6; font-weight: 300; min-height: 1.6em; white-space: pre-wrap; }
+        footer { margin-top: 2.5rem; text-align: center; }
+        #forgetBtn { background: none; border: 1px solid #475569; color: #94a3b8; padding: 0.5rem 1rem; border-radius: 0.5rem; cursor: pointer; font-size: 0.8rem; }
+        #forgetBtn:hover { border-color: #f87171; color: #f87171; }
+        #forgetStatus { display: block; margin-top: 0.5rem; font-size: 0.8rem; color: var(--muted); min-height: 1.2em; }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <header>
+        <h1>SoulSync</h1>
+        <p class="tagline">"I'm listening..."</p>
+    </header>
+
+    <section class="glass notice" aria-label="Important information">
+        <strong>AI demo, not a therapist.</strong>
+        SoulSync is a student project. It cannot diagnose, treat or give medical advice, and it is
+        <strong>not for emergencies</strong>. If you are in crisis, call {{ helpline }} (India, 24x7) or {{ emergency }}.
+        <details>
+            <summary>What happens to my data ({{ data_flow.mode }} mode)</summary>
+            <ul>
+                {% if data_flow.leaves_device %}
+                    {% for item in data_flow.leaves_device %}<li>Sent to a third party: {{ item }}.</li>{% endfor %}
+                {% else %}
+                    <li>Nothing leaves this computer. Speech recognition, emotion detection and the language model all run locally.</li>
+                {% endif %}
+                {% for item in data_flow.stored_on_server %}<li>Stored: {{ item }}.</li>{% endfor %}
+                <li>Never stored: voice recordings. They are processed in memory and discarded.</li>
+                <li>The detected emotion is an estimate from acted-speech training data and is often wrong.</li>
+                <li>This browser is recognised by a cookie for up to a year so earlier conversations can be recalled.</li>
+            </ul>
+        </details>
+    </section>
+
+    <main>
+        <div class="glass recorder">
+            <button id="recordBtn" aria-label="Start or stop recording">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-20a3 3 0 00-3 3v10a3 3 0 006 0V7a3 3 0 00-3-3z"></path>
+                </svg>
+            </button>
+            <div id="status">Ready</div>
+            <div id="error" role="alert"></div>
+        </div>
+
+        <div id="resultArea" hidden>
+            <div id="emotionCard" class="glass">
+                <h3 class="label">Live analysis</h3>
+                <span id="userSaid"></span>
+                <div><span id="emotion"></span></div>
+            </div>
+            <div id="aiCard" class="glass">
+                <p id="aiResponse" aria-live="polite"></p>
+            </div>
+        </div>
+    </main>
+
+    {% if memory_enabled %}
+    <footer>
+        <button id="forgetBtn">Forget me: delete everything stored about me</button>
+        <span id="forgetStatus"></span>
+    </footer>
+    {% endif %}
+</div>
+
+<script>
+    const SESSION_ID = {{ session_id | tojson }};
+    const TTS_BACKEND = {{ tts_backend | tojson }};
+
+    const recordBtn = document.getElementById('recordBtn');
+    const statusText = document.getElementById('status');
+    const errorText = document.getElementById('error');
+    const resultArea = document.getElementById('resultArea');
+    const aiResponse = document.getElementById('aiResponse');
+    const root = document.documentElement;
+
+    const THEMES = {
+        Happy: ['#10b981', 'rgba(16,185,129,0.1)', '#34d399'],
+        Sad: ['#a855f7', 'rgba(168,85,247,0.1)', '#c084fc'],
+        Angry: ['#ef4444', 'rgba(239,68,68,0.1)', '#f87171'],
+        Anxious: ['#f59e0b', 'rgba(245,158,11,0.1)', '#fbbf24'],
+        Neutral: ['#3b82f6', 'rgba(59,130,246,0.1)', '#60a5fa'],
+        Unavailable: ['#64748b', 'rgba(100,116,139,0.1)', '#94a3b8'],
+    };
+
+    function setTheme(emotion) {
+        const [tone, bg, text] = THEMES[emotion] || THEMES.Neutral;
+        root.style.setProperty('--tone', tone);
+        root.style.setProperty('--tone-bg', bg);
+        root.style.setProperty('--tone-text', text);
+    }
+
+    function showError(message) {
+        errorText.innerText = message;
+        statusText.innerText = 'Ready';
+        recordBtn.disabled = false;
+    }
+
+    // ---- speech output -------------------------------------------------
+    // Browser mode speaks each sentence as soon as it has streamed in.
+    let spokenUpTo = 0;
+    function speakReady(text, flush) {
+        if (TTS_BACKEND !== 'browser' || !('speechSynthesis' in window)) return;
+        const pending = text.slice(spokenUpTo);
+        const match = flush ? [pending] : pending.match(/^[\s\S]*[.!?…](?=\s)/);
+        if (!match || !match[0].trim()) return;
+        spokenUpTo += match[0].length;
+        const utterance = new SpeechSynthesisUtterance(match[0].replace(/\.\.\./g, ', '));
+        utterance.rate = 0.95;
+        speechSynthesis.speak(utterance);
+    }
+
+    async function speakWithServer(text) {
+        const res = await fetch('/get_audio', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({text}),
+        });
+        if (!res.ok) throw new Error('Speech output failed (' + res.status + ').');
+        const url = URL.createObjectURL(await res.blob());
+        const audio = new Audio(url);
+        audio.onended = () => URL.revokeObjectURL(url);
+        await audio.play();
+    }
+
+    // ---- recording -----------------------------------------------------
+    let mediaRecorder;
+    let audioChunks = [];
+
+    recordBtn.onclick = async () => {
+        errorText.innerText = '';
+        if (mediaRecorder && mediaRecorder.state === 'recording') {
+            mediaRecorder.stop();
+            mediaRecorder.stream.getTracks().forEach(t => t.stop());
+            recordBtn.classList.remove('active');
+            recordBtn.disabled = true;
+            statusText.innerText = 'Processing...';
+            return;
+        }
+        try {
+            if ('speechSynthesis' in window) speechSynthesis.cancel();
+            const stream = await navigator.mediaDevices.getUserMedia({audio: true});
+            mediaRecorder = new MediaRecorder(stream);
+            audioChunks = [];
+            mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+            mediaRecorder.onstop = uploadAndStream;
+            mediaRecorder.start();
+            recordBtn.classList.add('active');
+            statusText.innerText = 'Listening...';
+        } catch (e) {
+            console.error(e);
+            showError('Microphone access was blocked or is unavailable.');
+        }
+    };
+
+    async function uploadAndStream() {
+        // MediaRecorder decides the real container (WebM/Opus, or MP4 on Safari).
+        const mime = mediaRecorder.mimeType || 'audio/webm';
+        const ext = mime.includes('mp4') ? 'mp4' : mime.includes('ogg') ? 'ogg' : 'webm';
+        const formData = new FormData();
+        formData.append('audio', new Blob(audioChunks, {type: mime}), 'recording.' + ext);
+        formData.append('session_id', SESSION_ID);
+
+        try {
+            const response = await fetch('/process_audio_stream', {method: 'POST', body: formData});
+            if (!response.ok) {
+                let detail = 'Request failed (' + response.status + ').';
+                try { detail = (await response.json()).detail || detail; } catch (_) {}
+                throw new Error(detail);
+            }
+
+            const reader = response.body.getReader();
+            const decoder = new TextDecoder();
+            let buffer = '';
+            let headerDone = false;
+            let reply = '';
+            spokenUpTo = 0;
+            aiResponse.innerText = '';
+            resultArea.hidden = false;
+
+            while (true) {
+                const {done, value} = await reader.read();
+                buffer += decoder.decode(value || new Uint8Array(), {stream: !done});
+
+                if (!headerDone) {
+                    // Header is METADATA|<transcript>|<emotion>| and may arrive in pieces.
+                    const parts = buffer.split('|');
+                    if (parts.length >= 4 && parts[0] === 'METADATA') {
+                        document.getElementById('userSaid').innerText = parts[1] ? '"' + parts[1] + '"' : '(no speech detected)';
+                        document.getElementById('emotion').innerText = parts[2];
+                        setTheme(parts[2]);
+                        buffer = parts.slice(3).join('|');
+                        headerDone = true;
+                        statusText.innerText = 'Replying...';
+                    }
+                }
+                if (headerDone && buffer) {
+                    reply += buffer;
+                    buffer = '';
+                    aiResponse.innerText = reply;   // shown as it streams
+                    speakReady(reply, false);
+                }
+                if (done) break;
+            }
+
+            if (!headerDone) throw new Error('The server sent an incomplete reply.');
+            speakReady(reply, true);
+            if (TTS_BACKEND === 'say' && reply.trim()) await speakWithServer(reply);
+            statusText.innerText = 'Ready';
+            recordBtn.disabled = false;
+        } catch (e) {
+            console.error(e);
+            showError(e.message || 'Something went wrong.');
+        }
+    }
+
+    // ---- forget me -----------------------------------------------------
+    const forgetBtn = document.getElementById('forgetBtn');
+    if (forgetBtn) {
+        forgetBtn.onclick = async () => {
+            if (!confirm('Delete everything SoulSync has stored about you? This cannot be undone.')) return;
+            const out = document.getElementById('forgetStatus');
+            try {
+                const res = await fetch('/memory', {method: 'DELETE'});
+                if (!res.ok) throw new Error('Request failed (' + res.status + ').');
+                const data = await res.json();
+                out.innerText = 'Deleted ' + data.deleted_memories + ' stored message(s).';
+            } catch (e) {
+                console.error(e);
+                out.innerText = 'Could not delete: ' + e.message;
+            }
+        };
+    }
+</script>
+</body>
+</html>
