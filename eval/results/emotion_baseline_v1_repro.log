@@ -1,0 +1,9 @@
+baseline_v1_repro: test split of split_v1_repro.csv, n=877, speakers=14
+accuracy 0.3238 CI95 [0.293, 0.3535]
+macro-F1 0.2882 CI95 [0.2588, 0.3171]
+  happy    P 0.222 R 0.156 F1 0.184 n=179
+  sad      P 0.326 R 0.318 F1 0.322 n=179
+  angry    P 0.889 R 0.313 F1 0.463 n=179
+  neutral  P 0.500 R 0.037 F1 0.069 n=161
+  anxious  P 0.274 R 0.765 F1 0.403 n=179
+by corpus: {'CREMA-D': {'n': 679, 'accuracy': 0.299}, 'RAVDESS': {'n': 108, 'accuracy': 0.5185}, 'SAVEE': {'n': 90, 'accuracy': 0.2778}}

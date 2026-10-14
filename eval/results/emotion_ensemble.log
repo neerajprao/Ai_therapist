@@ -1,0 +1,16 @@
+val w=0.0 acc=0.9032 f1=0.9037
+val w=0.1 acc=0.9066 f1=0.9072
+val w=0.2 acc=0.9089 f1=0.9093
+val w=0.3 acc=0.9089 f1=0.9094
+val w=0.4 acc=0.9100 f1=0.9109
+val w=0.5 acc=0.9043 f1=0.9054
+val w=0.6 acc=0.8474 f1=0.8493
+val w=0.7 acc=0.8360 f1=0.8378
+val w=0.8 acc=0.8269 f1=0.8290
+val w=0.9 acc=0.8235 f1=0.8255
+val w=1.0 acc=0.8166 f1=0.8184
+best on val: w=0.4 gain over w2v alone 0.0925 CI95 [0.0691, 0.1168]
+decision: ENABLE_EMOTION2VEC=true, w2v weight 0.4
+test w2v alone   acc 0.7115 f1 0.7107
+test e2v alone   acc 0.8928 f1 0.8931
+test chosen      acc 0.8951 f1 0.8954

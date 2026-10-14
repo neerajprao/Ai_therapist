@@ -1,0 +1,19 @@
+{
+  "run": "main",
+  "device": "mps",
+  "batch_size": 16,
+  "steps_timed": 55,
+  "seconds_per_step": 0.8187,
+  "clips_per_second": 19.5,
+  "train_clips": 7635,
+  "batches_per_epoch": 477,
+  "projected_val_seconds_per_epoch": 16.7,
+  "projected_minutes_per_epoch": 6.79,
+  "projected_minutes_for_epochs": {
+    "8": 54.3,
+    "10": 67.9,
+    "12": 81.4,
+    "15": 101.8
+  },
+  "benchmark_wall_seconds": 56.9
+}

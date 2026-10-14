@@ -1,0 +1,17 @@
+# Cloud mode locally:  docker compose up --build
+# Needs GROQ_API_KEY and SECRET_KEY in your shell or in .env.
+services:
+  soulsync:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MODE: cloud
+      GROQ_API_KEY: ${GROQ_API_KEY:?set GROQ_API_KEY}
+      SECRET_KEY: ${SECRET_KEY:?set SECRET_KEY}
+      COOKIE_SECURE: "false"   # plain http on localhost
+    volumes:
+      - soulsync-data:/data    # memories persist across restarts
+    mem_limit: 512m
+volumes:
+  soulsync-data:

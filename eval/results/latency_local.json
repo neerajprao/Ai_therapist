@@ -1,0 +1,79 @@
+{
+  "mode": "local",
+  "llm": "ollama:qwen2.5:7b-instruct",
+  "stt": "openai-whisper:base",
+  "emotion_backend": "torch + emotion2vec (w2v weight 0.4)",
+  "clips": 24,
+  "clip_source": "test split, acted speech, 2 s or longer",
+  "machine": "arm64 macOS-27.0.1-arm64-arm-64bit",
+  "stages": {
+    "decode": {
+      "p50_ms": 11.4,
+      "p95_ms": 30.1,
+      "mean_ms": 14.4,
+      "n": 24
+    },
+    "emotion": {
+      "p50_ms": 175.8,
+      "p95_ms": 225.9,
+      "mean_ms": 162.8,
+      "n": 24
+    },
+    "stt": {
+      "p50_ms": 170.0,
+      "p95_ms": 224.5,
+      "mean_ms": 176.7,
+      "n": 24
+    },
+    "retrieval": {
+      "p50_ms": 63.6,
+      "p95_ms": 67.3,
+      "mean_ms": 64.3,
+      "n": 24
+    },
+    "llm_first_token": {
+      "p50_ms": 231.7,
+      "p95_ms": 485.2,
+      "mean_ms": 247.8,
+      "n": 24
+    },
+    "llm_total": {
+      "p50_ms": 1167.2,
+      "p95_ms": 1735.0,
+      "mean_ms": 1225.7,
+      "n": 24
+    },
+    "time_to_first_token_end_to_end": {
+      "p50_ms": 654.5,
+      "p95_ms": 928.1,
+      "mean_ms": 666.1,
+      "n": 24
+    },
+    "total": {
+      "p50_ms": 1595.2,
+      "p95_ms": 2181.5,
+      "mean_ms": 1643.9,
+      "n": 24
+    }
+  },
+  "mean_reply_chars": 141.4,
+  "notes": "One warm-up request excluded. Sequential requests, single user. No text-to-speech stage: the browser speaks the reply.",
+  "local_stt_comparison": {
+    "faster-whisper": {
+      "p50_ms": 297.3,
+      "p95_ms": 313.9,
+      "mean_ms": 298.7,
+      "n": 24,
+      "model": "base",
+      "example": "It's 11 o'clock."
+    },
+    "openai-whisper": {
+      "p50_ms": 151.9,
+      "p95_ms": 167.7,
+      "mean_ms": 152.6,
+      "n": 24,
+      "model": "base",
+      "example": "It's 11 o'clock."
+    }
+  }
+}

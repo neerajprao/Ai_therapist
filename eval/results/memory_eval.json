@@ -1,0 +1,139 @@
+{
+  "embedding_model": "all-MiniLM-L6-v2 (ONNX, ChromaDB default)",
+  "distance": "cosine",
+  "top_k": 3,
+  "users": 3,
+  "memories": 30,
+  "followup_cases": 42,
+  "unrelated_cases": 16,
+  "dev_sweep": [
+    {
+      "threshold": 0.3,
+      "hit_at_3": 0.0952,
+      "hit_at_1": 0.0952,
+      "false_recall_rate": 0.0,
+      "balanced_score": 0.5476,
+      "n_followups": 21,
+      "n_unrelated": 8
+    },
+    {
+      "threshold": 0.35,
+      "hit_at_3": 0.1429,
+      "hit_at_1": 0.1429,
+      "false_recall_rate": 0.0,
+      "balanced_score": 0.5714,
+      "n_followups": 21,
+      "n_unrelated": 8
+    },
+    {
+      "threshold": 0.4,
+      "hit_at_3": 0.381,
+      "hit_at_1": 0.381,
+      "false_recall_rate": 0.0,
+      "balanced_score": 0.6905,
+      "n_followups": 21,
+      "n_unrelated": 8
+    },
+    {
+      "threshold": 0.45,
+      "hit_at_3": 0.4286,
+      "hit_at_1": 0.4286,
+      "false_recall_rate": 0.0,
+      "balanced_score": 0.7143,
+      "n_followups": 21,
+      "n_unrelated": 8
+    },
+    {
+      "threshold": 0.5,
+      "hit_at_3": 0.4762,
+      "hit_at_1": 0.4762,
+      "false_recall_rate": 0.0,
+      "balanced_score": 0.7381,
+      "n_followups": 21,
+      "n_unrelated": 8
+    },
+    {
+      "threshold": 0.55,
+      "hit_at_3": 0.619,
+      "hit_at_1": 0.619,
+      "false_recall_rate": 0.0,
+      "balanced_score": 0.8095,
+      "n_followups": 21,
+      "n_unrelated": 8
+    },
+    {
+      "threshold": 0.6,
+      "hit_at_3": 0.8095,
+      "hit_at_1": 0.8095,
+      "false_recall_rate": 0.0,
+      "balanced_score": 0.9048,
+      "n_followups": 21,
+      "n_unrelated": 8
+    },
+    {
+      "threshold": 0.65,
+      "hit_at_3": 0.8571,
+      "hit_at_1": 0.8571,
+      "false_recall_rate": 0.0,
+      "balanced_score": 0.9286,
+      "n_followups": 21,
+      "n_unrelated": 8
+    },
+    {
+      "threshold": 0.7,
+      "hit_at_3": 0.9048,
+      "hit_at_1": 0.9048,
+      "false_recall_rate": 0.0,
+      "balanced_score": 0.9524,
+      "n_followups": 21,
+      "n_unrelated": 8
+    },
+    {
+      "threshold": 0.75,
+      "hit_at_3": 1.0,
+      "hit_at_1": 1.0,
+      "false_recall_rate": 0.125,
+      "balanced_score": 0.9375,
+      "n_followups": 21,
+      "n_unrelated": 8
+    },
+    {
+      "threshold": 0.8,
+      "hit_at_3": 1.0,
+      "hit_at_1": 1.0,
+      "false_recall_rate": 0.125,
+      "balanced_score": 0.9375,
+      "n_followups": 21,
+      "n_unrelated": 8
+    }
+  ],
+  "chosen_max_distance": 0.7,
+  "selection_rule": "max balanced_score on dev; ties go to the smaller threshold",
+  "test": {
+    "threshold": 0.7,
+    "hit_at_3": 0.8095,
+    "hit_at_1": 0.8095,
+    "false_recall_rate": 0.0,
+    "balanced_score": 0.9048,
+    "n_followups": 21,
+    "n_unrelated": 8
+  },
+  "cross_user_leaks": {
+    "leaks": 0,
+    "results_checked": 580,
+    "threshold": 2.0,
+    "top_k": 10
+  },
+  "current_session_exclusion": {
+    "violations": 0,
+    "memories_checked": 30,
+    "same_text_recalled_from_another_session": 30
+  },
+  "latency_ms": {
+    "p50": 61.17,
+    "p95": 62.8,
+    "n": 174,
+    "note": "single retrieval on CPU, in-memory collection of 30 memories"
+  },
+  "caveat": "Small synthetic set written by the project author; half of 42 follow-ups and 16 unrelated questions are used for the final numbers, so each test case moves Hit@3 by about 5 points."
+}

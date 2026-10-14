@@ -42,3 +42,7 @@ models/emotion2vec/model.pt
 !eval/data/
 !eval/results/
 !training/splits/
+
+# Local model folders
+models/emotion_w2v2/
+training/logs/

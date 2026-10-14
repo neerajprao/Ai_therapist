@@ -1,0 +1,9 @@
+test: test split of split_v2.csv, n=877, speakers=14
+accuracy 0.7115 CI95 [0.683, 0.7423]
+macro-F1 0.7107 CI95 [0.6817, 0.7408]
+  happy    P 0.790 R 0.631 F1 0.702 n=179
+  sad      P 0.612 R 0.749 F1 0.673 n=179
+  angry    P 0.743 R 0.855 F1 0.795 n=179
+  neutral  P 0.769 R 0.745 F1 0.757 n=161
+  anxious  P 0.680 R 0.581 F1 0.626 n=179
+by corpus: {'CREMA-D': {'n': 679, 'accuracy': 0.7246}, 'RAVDESS': {'n': 108, 'accuracy': 0.6944}, 'SAVEE': {'n': 90, 'accuracy': 0.6333}}

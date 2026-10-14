@@ -1,0 +1,16 @@
+dev  t=0.30 hit@3=0.095 false_recall=0.000 balanced=0.548
+dev  t=0.35 hit@3=0.143 false_recall=0.000 balanced=0.571
+dev  t=0.40 hit@3=0.381 false_recall=0.000 balanced=0.691
+dev  t=0.45 hit@3=0.429 false_recall=0.000 balanced=0.714
+dev  t=0.50 hit@3=0.476 false_recall=0.000 balanced=0.738
+dev  t=0.55 hit@3=0.619 false_recall=0.000 balanced=0.809
+dev  t=0.60 hit@3=0.809 false_recall=0.000 balanced=0.905
+dev  t=0.65 hit@3=0.857 false_recall=0.000 balanced=0.929
+dev  t=0.70 hit@3=0.905 false_recall=0.000 balanced=0.952
+dev  t=0.75 hit@3=1.000 false_recall=0.125 balanced=0.938
+dev  t=0.80 hit@3=1.000 false_recall=0.125 balanced=0.938
+chosen MEMORY_MAX_DISTANCE = 0.7
+test hit@3=0.8095 hit@1=0.8095 false_recall=0.0 (n=21 follow-ups, 8 unrelated)
+cross-user leaks: 0 of 580 results
+current-session violations: 0 of 30
+latency ms p50=61.17 p95=62.8

@@ -1,0 +1,117 @@
+{
+  "name": "baseline_v1_repro",
+  "model_dir": "training/runs/v1_repro/best",
+  "evaluated_on": "test split of split_v1_repro.csv",
+  "speakers": 14,
+  "n": 877,
+  "accuracy": 0.3238,
+  "macro_f1": 0.2882,
+  "accuracy_ci95": [
+    0.293,
+    0.3535
+  ],
+  "macro_f1_ci95": [
+    0.2588,
+    0.3171
+  ],
+  "per_class": {
+    "happy": {
+      "precision": 0.2222,
+      "recall": 0.1564,
+      "f1": 0.1836,
+      "support": 179
+    },
+    "sad": {
+      "precision": 0.3257,
+      "recall": 0.3184,
+      "f1": 0.322,
+      "support": 179
+    },
+    "angry": {
+      "precision": 0.8889,
+      "recall": 0.3128,
+      "f1": 0.4628,
+      "support": 179
+    },
+    "neutral": {
+      "precision": 0.5,
+      "recall": 0.0373,
+      "f1": 0.0694,
+      "support": 161
+    },
+    "anxious": {
+      "precision": 0.2735,
+      "recall": 0.7654,
+      "f1": 0.4029,
+      "support": 179
+    }
+  },
+  "confusion_matrix": {
+    "labels": [
+      "happy",
+      "sad",
+      "angry",
+      "neutral",
+      "anxious"
+    ],
+    "rows_true_cols_pred": [
+      [
+        28,
+        23,
+        2,
+        0,
+        126
+      ],
+      [
+        3,
+        57,
+        0,
+        6,
+        113
+      ],
+      [
+        74,
+        7,
+        56,
+        0,
+        42
+      ],
+      [
+        12,
+        55,
+        5,
+        6,
+        83
+      ],
+      [
+        9,
+        33,
+        0,
+        0,
+        137
+      ]
+    ]
+  },
+  "by_corpus": {
+    "CREMA-D": {
+      "n": 679,
+      "accuracy": 0.299
+    },
+    "RAVDESS": {
+      "n": 108,
+      "accuracy": 0.5185
+    },
+    "SAVEE": {
+      "n": 90,
+      "accuracy": 0.2778
+    }
+  },
+  "per_speaker_accuracy": {
+    "min": 0.209,
+    "median": 0.30879999999999996,
+    "max": 0.6667
+  },
+  "ci_note": "95% CIs are a clip-level bootstrap (2,000 resamples). They reflect test-set size only, not seed variance or the small number of speakers.",
+  "inference_seconds": 108.4,
+  "device": "cpu"
+}

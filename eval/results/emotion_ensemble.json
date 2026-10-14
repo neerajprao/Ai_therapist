@@ -1,0 +1,260 @@
+{
+  "model_dir": "training/runs/main/best",
+  "val_clips": 878,
+  "test_clips": 877,
+  "e2v_label_mapping": "angry, happy, neutral, sad kept; fearful -> anxious; disgusted, surprised, other, <unk> dropped; renormalised",
+  "val_sweep": [
+    {
+      "w2v_weight": 0.0,
+      "val_accuracy": 0.9032,
+      "val_macro_f1": 0.9037
+    },
+    {
+      "w2v_weight": 0.1,
+      "val_accuracy": 0.9066,
+      "val_macro_f1": 0.9072
+    },
+    {
+      "w2v_weight": 0.2,
+      "val_accuracy": 0.9089,
+      "val_macro_f1": 0.9093
+    },
+    {
+      "w2v_weight": 0.3,
+      "val_accuracy": 0.9089,
+      "val_macro_f1": 0.9094
+    },
+    {
+      "w2v_weight": 0.4,
+      "val_accuracy": 0.91,
+      "val_macro_f1": 0.9109
+    },
+    {
+      "w2v_weight": 0.5,
+      "val_accuracy": 0.9043,
+      "val_macro_f1": 0.9054
+    },
+    {
+      "w2v_weight": 0.6,
+      "val_accuracy": 0.8474,
+      "val_macro_f1": 0.8493
+    },
+    {
+      "w2v_weight": 0.7,
+      "val_accuracy": 0.836,
+      "val_macro_f1": 0.8378
+    },
+    {
+      "w2v_weight": 0.8,
+      "val_accuracy": 0.8269,
+      "val_macro_f1": 0.829
+    },
+    {
+      "w2v_weight": 0.9,
+      "val_accuracy": 0.8235,
+      "val_macro_f1": 0.8255
+    },
+    {
+      "w2v_weight": 1.0,
+      "val_accuracy": 0.8166,
+      "val_macro_f1": 0.8184
+    }
+  ],
+  "decision_rule": "enable only if val macro-F1 gain >= 0.01 and paired-bootstrap 95% CI of the gain > 0",
+  "best_on_val": {
+    "w2v_weight": 0.4,
+    "val_accuracy": 0.91,
+    "val_macro_f1": 0.9109
+  },
+  "val_gain_over_w2v_alone": 0.0925,
+  "val_gain_ci95": [
+    0.0691,
+    0.1168
+  ],
+  "enable_emotion2vec": true,
+  "chosen_w2v_weight": 0.4,
+  "test": {
+    "wav2vec2_alone": {
+      "n": 877,
+      "accuracy": 0.7115,
+      "macro_f1": 0.7107,
+      "accuracy_ci95": [
+        0.683,
+        0.7423
+      ],
+      "macro_f1_ci95": [
+        0.6817,
+        0.7408
+      ],
+      "per_class": {
+        "happy": {
+          "precision": 0.7902,
+          "recall": 0.6313,
+          "f1": 0.7019,
+          "support": 179
+        },
+        "sad": {
+          "precision": 0.6119,
+          "recall": 0.7486,
+          "f1": 0.6734,
+          "support": 179
+        },
+        "angry": {
+          "precision": 0.7427,
+          "recall": 0.8547,
+          "f1": 0.7948,
+          "support": 179
+        },
+        "neutral": {
+          "precision": 0.7692,
+          "recall": 0.7453,
+          "f1": 0.7571,
+          "support": 161
+        },
+        "anxious": {
+          "precision": 0.6797,
+          "recall": 0.581,
+          "f1": 0.6265,
+          "support": 179
+        }
+      }
+    },
+    "emotion2vec_alone": {
+      "n": 877,
+      "accuracy": 0.8928,
+      "macro_f1": 0.8931,
+      "accuracy_ci95": [
+        0.8723,
+        0.9133
+      ],
+      "macro_f1_ci95": [
+        0.8728,
+        0.9127
+      ],
+      "per_class": {
+        "happy": {
+          "precision": 0.8925,
+          "recall": 0.9274,
+          "f1": 0.9096,
+          "support": 179
+        },
+        "sad": {
+          "precision": 0.8154,
+          "recall": 0.8883,
+          "f1": 0.8503,
+          "support": 179
+        },
+        "angry": {
+          "precision": 0.96,
+          "recall": 0.9385,
+          "f1": 0.9492,
+          "support": 179
+        },
+        "neutral": {
+          "precision": 0.9103,
+          "recall": 0.882,
+          "f1": 0.8959,
+          "support": 161
+        },
+        "anxious": {
+          "precision": 0.897,
+          "recall": 0.8268,
+          "f1": 0.8605,
+          "support": 179
+        }
+      }
+    },
+    "chosen": {
+      "n": 877,
+      "accuracy": 0.8951,
+      "macro_f1": 0.8954,
+      "accuracy_ci95": [
+        0.8734,
+        0.9145
+      ],
+      "macro_f1_ci95": [
+        0.8742,
+        0.9148
+      ],
+      "per_class": {
+        "happy": {
+          "precision": 0.9116,
+          "recall": 0.9218,
+          "f1": 0.9167,
+          "support": 179
+        },
+        "sad": {
+          "precision": 0.8196,
+          "recall": 0.8883,
+          "f1": 0.8525,
+          "support": 179
+        },
+        "angry": {
+          "precision": 0.9441,
+          "recall": 0.9441,
+          "f1": 0.9441,
+          "support": 179
+        },
+        "neutral": {
+          "precision": 0.9167,
+          "recall": 0.8882,
+          "f1": 0.9022,
+          "support": 161
+        },
+        "anxious": {
+          "precision": 0.8922,
+          "recall": 0.8324,
+          "f1": 0.8613,
+          "support": 179
+        }
+      }
+    },
+    "best_val_weight_for_reference": {
+      "n": 877,
+      "accuracy": 0.8951,
+      "macro_f1": 0.8954,
+      "accuracy_ci95": [
+        0.8734,
+        0.9145
+      ],
+      "macro_f1_ci95": [
+        0.8742,
+        0.9148
+      ],
+      "per_class": {
+        "happy": {
+          "precision": 0.9116,
+          "recall": 0.9218,
+          "f1": 0.9167,
+          "support": 179
+        },
+        "sad": {
+          "precision": 0.8196,
+          "recall": 0.8883,
+          "f1": 0.8525,
+          "support": 179
+        },
+        "angry": {
+          "precision": 0.9441,
+          "recall": 0.9441,
+          "f1": 0.9441,
+          "support": 179
+        },
+        "neutral": {
+          "precision": 0.9167,
+          "recall": 0.8882,
+          "f1": 0.9022,
+          "support": 161
+        },
+        "anxious": {
+          "precision": 0.8922,
+          "recall": 0.8324,
+          "f1": 0.8613,
+          "support": 179
+        }
+      }
+    }
+  },
+  "e2v_inference_seconds_cpu": 196.2,
+  "caveat": "Emotion2Vec is a public pretrained model whose training data is not controlled here. If its training set included RAVDESS, CREMA-D or SAVEE, its scores on this test set are optimistic, because our test speakers may have been seen by it. Its numbers are therefore not a clean speaker-independent result."
+}

@@ -38,7 +38,7 @@ class MemoryStore:
         self,
         path: Path | None,
         top_k: int = 3,
-        max_distance: float = 0.5,
+        max_distance: float = 0.7,
         embedding_function=None,
     ):
         """`path=None` gives an in-memory store (used by tests and evals)."""

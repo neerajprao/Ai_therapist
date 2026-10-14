@@ -1,0 +1,4 @@
+pytorch_fp32    378.3 MB  acc 0.7115  f1 0.7107  p50 70.2 ms  p95 72.2 ms
+onnx_fp32       378.5 MB  acc 0.7115  f1 0.7107  p50 101.6 ms  p95 106.3 ms
+onnx_int8       122.1 MB  acc 0.7161  f1 0.7144  p50 65.5 ms  p95 66.7 ms
+INT8 vs PyTorch: {'size_reduction_pct': 67.7, 'size_ratio': 3.1, 'p50_speedup': 1.07, 'accuracy_change': 0.0046, 'macro_f1_change': 0.0037}

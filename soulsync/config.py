@@ -22,13 +22,20 @@ _MODE_DEFAULTS = {
         "LLM_MODEL": "qwen2.5:7b-instruct",
         "STT_BACKEND": "local",
         "EMOTION_BACKEND": "torch",
+        # Chosen on the validation split by eval/ensemble_eval.py.
+        "ENABLE_EMOTION2VEC": "true",
+        "ENSEMBLE_W2V_WEIGHT": "0.4",
     },
     "cloud": {
         "LLM_BACKEND": "groq",
-        # Filled in from Groq's published model list; see docs/CLOUD.md.
-        "LLM_MODEL": "",
+        # Groq's only Qwen chat model (preview) when checked on 2026-10-13.
+        # Production fallback: llama-3.1-8b-instant.
+        "LLM_MODEL": "qwen/qwen3.8-27b",
         "STT_BACKEND": "groq",
         "EMOTION_BACKEND": "onnx",
+        # Emotion2Vec needs PyTorch and 1.9 GB of weights: not in the cloud image.
+        "ENABLE_EMOTION2VEC": "false",
+        "ENSEMBLE_W2V_WEIGHT": "1.0",
     },
 }
 
@@ -160,7 +167,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
             llm_backend=llm_backend,
             llm_model=llm_model,
             stt_backend=stt_backend,
-            local_stt_engine=choice("LOCAL_STT_ENGINE", "faster-whisper"),
+            local_stt_engine=choice("LOCAL_STT_ENGINE", "openai-whisper"),
             whisper_model=get("WHISPER_MODEL", "base"),
             groq_stt_model=get("GROQ_STT_MODEL", "whisper-large-v3-turbo"),
             emotion_backend=choice("EMOTION_BACKEND", "torch"),
@@ -172,7 +179,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
             silence_rms=float(get("SILENCE_RMS", "0.008")),
             memory_enabled=_bool(get("MEMORY_ENABLED", "true"), "MEMORY_ENABLED"),
             memory_top_k=int(get("MEMORY_TOP_K", "3")),
-            memory_max_distance=float(get("MEMORY_MAX_DISTANCE", "0.5")),
+            memory_max_distance=float(get("MEMORY_MAX_DISTANCE", "0.7")),
             history_max_turns=int(get("HISTORY_MAX_TURNS", "8")),
             tts_backend=choice("TTS_BACKEND", "browser"),
             data_dir=data_dir,

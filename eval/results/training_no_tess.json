@@ -1,0 +1,115 @@
+{
+  "run": "no_tess",
+  "status": "completed",
+  "config": {
+    "run_name": "no_tess",
+    "split": "split_v2.csv",
+    "base_model": "facebook/wav2vec2-base",
+    "exclude_corpus": "TESS",
+    "epochs": 8,
+    "batch_size": 16,
+    "accum": 1,
+    "lr": 5e-05,
+    "weight_decay": 0.01,
+    "warmup_frac": 0.1,
+    "patience": 3,
+    "select": "macro_f1",
+    "no_random_crop": false,
+    "no_class_weights": false,
+    "seed": 42,
+    "max_minutes": 60.0,
+    "bench_steps": 0,
+    "resume": false,
+    "device": "mps",
+    "train_clips": 5635,
+    "val_clips": 878,
+    "class_counts": {
+      "happy": 1163,
+      "sad": 1165,
+      "angry": 1164,
+      "neutral": 979,
+      "anxious": 1164
+    },
+    "class_weights": [
+      0.969,
+      0.9674,
+      0.9682,
+      1.1512,
+      0.9682
+    ],
+    "trainable_params": 90369413,
+    "steps_per_epoch": 352,
+    "torch": "2.14.1"
+  },
+  "epochs_completed": 8,
+  "best_epoch": 8,
+  "best_val_macro_f1": 0.8261,
+  "train_seconds": 2867.7,
+  "train_minutes": 47.8,
+  "history": [
+    {
+      "epoch": 1,
+      "train_loss": 1.2325,
+      "val_accuracy": 0.6788,
+      "val_macro_f1": 0.6792,
+      "seconds": 373.5,
+      "improved": true
+    },
+    {
+      "epoch": 2,
+      "train_loss": 0.7696,
+      "val_accuracy": 0.7654,
+      "val_macro_f1": 0.7641,
+      "seconds": 353.0,
+      "improved": true
+    },
+    {
+      "epoch": 3,
+      "train_loss": 0.5522,
+      "val_accuracy": 0.7426,
+      "val_macro_f1": 0.7324,
+      "seconds": 356.2,
+      "improved": false
+    },
+    {
+      "epoch": 4,
+      "train_loss": 0.4111,
+      "val_accuracy": 0.7893,
+      "val_macro_f1": 0.7914,
+      "seconds": 356.6,
+      "improved": true
+    },
+    {
+      "epoch": 5,
+      "train_loss": 0.311,
+      "val_accuracy": 0.8007,
+      "val_macro_f1": 0.8012,
+      "seconds": 357.2,
+      "improved": true
+    },
+    {
+      "epoch": 6,
+      "train_loss": 0.241,
+      "val_accuracy": 0.8109,
+      "val_macro_f1": 0.8121,
+      "seconds": 357.6,
+      "improved": true
+    },
+    {
+      "epoch": 7,
+      "train_loss": 0.1752,
+      "val_accuracy": 0.7973,
+      "val_macro_f1": 0.7944,
+      "seconds": 357.1,
+      "improved": false
+    },
+    {
+      "epoch": 8,
+      "train_loss": 0.1306,
+      "val_accuracy": 0.8257,
+      "val_macro_f1": 0.8261,
+      "seconds": 356.5,
+      "improved": true
+    }
+  ]
+}

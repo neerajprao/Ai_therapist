@@ -1,6 +1,6 @@
 # SoulSync v2 plan
 
-Workspace: `~/SoulSync-v2/` with venv `.venv` (Python 3.11.16) and the repo in `Ai_therapist/` on branch `v2`. Nothing is pushed without approval.
+Workspace: `~/Desktop/project/` with venv `.venv` (Python 3.11.16) and the repo in `Ai_therapist/` on branch `v2`. Written before the work started; see docs/V2_SUMMARY.md for what happened.
 
 ## Decisions needed before work continues
 
