@@ -2,9 +2,9 @@
 
 SoulSync is a voice-first AI companion demo. You speak, it transcribes what you said, estimates the emotion in your voice, recalls relevant things you told it in earlier conversations, and streams a short supportive reply that your browser reads aloud. It runs fully on a laptop (Ollama, local Whisper, a fine-tuned Wav2Vec2 emotion model) or in a small cloud container (Groq APIs, an INT8 ONNX emotion model, no PyTorch). It is a student project and **not a therapist, not a medical device, and not for emergencies**.
 
-<!-- Demo GIF placeholder: record the app and save it as docs/demo.gif, then uncomment.
-![SoulSync demo](docs/demo.gif)
--->
+<p align="center"><img src="docs/demo.gif" alt="SoulSync demo: speaking to the app, the transcript and detected emotion appear, then a streamed reply that recalls an earlier conversation" width="600"></p>
+
+<p align="center"><em>Recorded in local mode. The second reply recalls something said in an earlier session.</em></p>
 
 ## Architecture
 
