@@ -51,6 +51,7 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--compare-stt", action="store_true", help="also time faster-whisper vs openai-whisper")
     p.add_argument("--tag", default="", help="suffix for the output file, e.g. 'w2v_only'")
+    p.add_argument("--pace", type=float, default=0.0, help="seconds to wait between clips (API rate limits)")
     args = p.parse_args()
 
     settings = load_settings()
@@ -97,7 +98,10 @@ def main() -> None:
         return t
 
     run(clips[0][1], clips[0][0].name)  # warm-up, not recorded
-    records = [run(raw, path.name) for path, raw in clips]
+    records = []
+    for path, raw in clips:
+        time.sleep(args.pace)  # not timed; keeps cloud APIs under their per-minute limits
+        records.append(run(raw, path.name))
 
     stages = ["decode", "emotion", "stt", "retrieval", "llm_first_token", "llm_total",
               "time_to_first_token_end_to_end", "total"]
@@ -114,6 +118,7 @@ def main() -> None:
         "machine": f"{platform.machine()} {platform.platform()}",
         "stages": {s: pct([r[s] * 1000 for r in records]) for s in stages},
         "mean_reply_chars": round(float(np.mean([r["reply_chars"] for r in records])), 1),
+        "pace_seconds_between_clips": args.pace,
         "notes": "One warm-up request excluded. Sequential requests, single user. "
         "No text-to-speech stage: the browser speaks the reply.",
     }

@@ -1,0 +1,62 @@
+{
+  "mode": "cloud",
+  "llm": "groq:qwen/qwen3.8-27b",
+  "stt": "groq:whisper-large-v3-turbo",
+  "emotion_backend": "onnx",
+  "clips": 24,
+  "clip_source": "test split, acted speech, 2 s or longer",
+  "machine": "arm64 macOS-27.0.1-arm64-arm-64bit",
+  "stages": {
+    "decode": {
+      "p50_ms": 10.5,
+      "p95_ms": 29.2,
+      "mean_ms": 13.5,
+      "n": 24
+    },
+    "emotion": {
+      "p50_ms": 89.0,
+      "p95_ms": 146.5,
+      "mean_ms": 86.9,
+      "n": 24
+    },
+    "stt": {
+      "p50_ms": 241.5,
+      "p95_ms": 430.0,
+      "mean_ms": 280.8,
+      "n": 24
+    },
+    "retrieval": {
+      "p50_ms": 88.8,
+      "p95_ms": 92.2,
+      "mean_ms": 88.7,
+      "n": 24
+    },
+    "llm_first_token": {
+      "p50_ms": 113.1,
+      "p95_ms": 171.7,
+      "mean_ms": 124.5,
+      "n": 24
+    },
+    "llm_total": {
+      "p50_ms": 191.1,
+      "p95_ms": 246.8,
+      "mean_ms": 203.1,
+      "n": 24
+    },
+    "time_to_first_token_end_to_end": {
+      "p50_ms": 553.5,
+      "p95_ms": 745.3,
+      "mean_ms": 594.5,
+      "n": 24
+    },
+    "total": {
+      "p50_ms": 645.5,
+      "p95_ms": 822.9,
+      "mean_ms": 673.0,
+      "n": 24
+    }
+  },
+  "mean_reply_chars": 186.2,
+  "pace_seconds_between_clips": 3.5,
+  "notes": "One warm-up request excluded. Sequential requests, single user. No text-to-speech stage: the browser speaks the reply."
+}

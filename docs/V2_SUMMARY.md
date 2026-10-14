@@ -66,7 +66,7 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 ## What was not done, and why
 
 - **Docker build and memory measurement (Phase 7).** Docker is not installed and you asked to defer it. The Dockerfile and compose file are untested. `eval/results/cloud_memory.json` does not exist.
-- **Cloud mode against the live Groq API.** No API key. The Groq backends are exercised only through fakes. Groq's Qwen model is a preview model and may emit reasoning text that needs handling; that is untested.
+- **Cloud mode from a real server.** Groq was tested live from the laptop (24 clips, `latency_cloud.json`); `qwen/qwen3.8-27b` returned clean replies with no reasoning text. Not yet run from a deployed container.
 - **Groq free-tier limits.** Their docs page lists Developer-plan limits only.
 - **Original v1 baseline.** The original weights were unavailable, so the baseline is a reproduction. It reaches 61.9% on its own leaky validation split where your notebook reported 82.9%, so it is weaker than the real v1 model and the before/after gap is overstated.
 - **`wav2vec2-base` versus `wav2vec2-base-960h` comparison. Attempted and failed.** With the main recipe the 960h model's loss became NaN within the first 100 steps. I stopped it after 4.1 minutes rather than retune it, because a different learning rate would no longer be a like-for-like comparison. Recorded in `eval/results/training_base960h.json`.
@@ -75,7 +75,7 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 - **Memories in replies.** Retrieval injects the right memory, but the 7B model mentions it in only 1 of 4 judged cases. Not fixed.
 - **A trustworthy reply-quality score.** The judge is the same model as the reply writer and gives near-ceiling scores; only the rule checks are informative.
 - **Browser check.** The server was tested with real models through `curl`. The microphone, live text rendering and browser speech have not been tried in a browser.
-- **CI.** The workflow has never run because nothing has been pushed.
+- **Git history.** Purged and force-pushed. GitHub still serves the old commits by commit ID until GitHub Support removes them.
 
 ## Things to know before quoting results
 

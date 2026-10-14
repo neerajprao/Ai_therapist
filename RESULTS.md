@@ -158,7 +158,20 @@ One warm-up request excluded. Sequential requests, single user. No text-to-speec
 
 ### Cloud mode
 
-_Not run: `eval/results/latency_cloud.json` does not exist. Cloud mode needs a Groq API key._
+LLM `groq:qwen/qwen3.8-27b`, STT `groq:whisper-large-v3-turbo`, emotion backend `onnx`, 24 clips (test split, acted speech, 2 s or longer).
+
+| Stage | p50 (ms) | p95 (ms) |
+|---|---|---|
+| Audio decode | 10.5 | 29.2 |
+| Emotion | 89.0 | 146.5 |
+| Speech-to-text | 241.5 | 430.0 |
+| Memory retrieval | 88.8 | 92.2 |
+| LLM time to first token | 113.1 | 171.7 |
+| LLM full reply | 191.1 | 246.8 |
+| Upload to first reply token | 553.5 | 745.3 |
+| Total | 645.5 | 822.9 |
+
+One warm-up request excluded. Sequential requests, single user. No text-to-speech stage: the browser speaks the reply. Machine: arm64 macOS-27.0.1-arm64-arm-64bit. Source: `latency_cloud.json`.
 
 ## 5. Coping-skills knowledge base (off by default)
 

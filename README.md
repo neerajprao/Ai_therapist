@@ -49,6 +49,7 @@ flowchart LR
 | ONNX INT8 vs PyTorch | 378.3 MB to 122.1 MB (67.7% smaller); CPU p50 70.2 ms to 65.5 ms; macro-F1 +0.4 points | `onnx_benchmark.json` |
 | Memory retrieval, held-out half | Hit@3 81.0%, false recall 0.0%, 0 cross-user leaks | `memory_eval.json` |
 | Local latency, upload to first reply token | p50 0.65 s, p95 0.93 s over 24 clips | `latency_local.json` |
+| Cloud latency (Groq), upload to first reply token | p50 0.55 s, p95 0.75 s over 24 clips, measured from a laptop | `latency_cloud.json` |
 | Tests | 123 pytest cases, no model downloads | `tests/` |
 
 Caveats that matter: the emotion data is acted English speech; the v1 baseline is a reproduction of the old recipe, not the original weights; Emotion2Vec's training data probably overlaps the test corpora, so the ensemble figure is optimistic; the memory test set is small and synthetic.
@@ -92,6 +93,7 @@ docker compose up --build                      # http://localhost:8000
 - LLM: `qwen/qwen3.8-27b`, the Qwen model Groq listed when this was written (a preview model). Set `LLM_MODEL=llama-3.1-8b-instant` for a production-tier alternative.
 - Speech-to-text: `whisper-large-v3-turbo`.
 - Rate limits depend on your Groq plan; see the limits page in your Groq account. When Groq returns HTTP 429 the app replies with a plain "please wait a minute" message.
+- Cloud mode has been tested live against Groq from a laptop (see `eval/results/latency_cloud.json`).
 - **The Docker image has not been built or measured yet.** Its size and peak memory against a 512 MB limit are not known.
 - **Memories may not persist on free hosts.** Many free tiers wipe the disk on restart, which erases the ChromaDB store. Mount a persistent volume, or point the memory layer at a hosted vector database; that option is documented here but not implemented.
 
