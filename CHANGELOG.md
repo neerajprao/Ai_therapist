@@ -22,7 +22,10 @@ Measured results for this version are in [RESULTS.md](RESULTS.md). The issues it
 - FastAPI backend with Pydantic models, `/health`, and the same `METADATA|transcript|emotion|` streaming contract.
 - Long-term memory on ChromaDB: per-user filtering, current-session exclusion, a distance threshold, and a "Forget me" button backed by `DELETE /memory`.
 - Persistent user identity: a signed, HTTP-only, one-year cookie. Each page load still starts a new session.
-- Crisis-language safety layer that bypasses the LLM and returns helpline information.
+- Crisis-language safety layer that bypasses the LLM and returns helpline information, plus a fixed doctor-referral line for medication and diagnosis questions.
+- Optional coping-skills knowledge base (draft notes pending review; off by default).
+- Per-user rate limit on recordings.
+- Automated reply-quality evaluation (LLM-as-judge plus keyword rule checks).
 - Disclaimer in the UI and a per-mode statement of what data is stored and what leaves the device.
 - Local mode (Ollama, local Whisper) and cloud mode (Groq LLM and speech-to-text, ONNX INT8 emotion model, no PyTorch).
 - ONNX export with dynamic INT8 quantisation.

@@ -81,6 +81,8 @@ class Settings:
     memory_enabled: bool
     memory_top_k: int
     memory_max_distance: float
+    knowledge_enabled: bool
+    knowledge_max_distance: float
     history_max_turns: int
     tts_backend: str
     data_dir: Path
@@ -89,6 +91,7 @@ class Settings:
     ollama_host: str
     cookie_secure: bool
     max_upload_mb: int
+    rate_limit_per_minute: int
     log_level: str
 
     @property
@@ -180,6 +183,8 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
             memory_enabled=_bool(get("MEMORY_ENABLED", "true"), "MEMORY_ENABLED"),
             memory_top_k=int(get("MEMORY_TOP_K", "3")),
             memory_max_distance=float(get("MEMORY_MAX_DISTANCE", "0.7")),
+            knowledge_enabled=_bool(get("KNOWLEDGE_ENABLED", "false"), "KNOWLEDGE_ENABLED"),
+            knowledge_max_distance=float(get("KNOWLEDGE_MAX_DISTANCE", "0.75")),
             history_max_turns=int(get("HISTORY_MAX_TURNS", "8")),
             tts_backend=choice("TTS_BACKEND", "browser"),
             data_dir=data_dir,
@@ -188,6 +193,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
             ollama_host=get("OLLAMA_HOST", "http://127.0.0.1:11434"),
             cookie_secure=_bool(get("COOKIE_SECURE", "true" if mode == "cloud" else "false"), "COOKIE_SECURE"),
             max_upload_mb=int(get("MAX_UPLOAD_MB", "10")),
+            rate_limit_per_minute=int(get("RATE_LIMIT_PER_MINUTE", "12")),
             log_level=get("LOG_LEVEL", "INFO").upper(),
         )
     except ValueError as exc:

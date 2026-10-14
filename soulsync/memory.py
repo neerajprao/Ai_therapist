@@ -138,8 +138,8 @@ def format_memories(memories: list[Memory]) -> str:
         "Things this person told you in earlier conversations, which may or may not "
         "matter now:\n"
         f"{lines}\n"
-        "Use one only if it is clearly relevant to what they just said. If you do, "
-        "mention it gently and briefly (for example, 'last time you mentioned...'). "
+        "Use one only if it is clearly relevant to what they just said. If one is, connect to it "
+        "gently and briefly in your reply (for example, 'last time you mentioned...') so they feel remembered. "
         "If none is relevant, ignore them completely and do not say that you remember anything."
     )
 

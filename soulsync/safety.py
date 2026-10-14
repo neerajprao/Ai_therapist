@@ -37,6 +37,7 @@ _CONTRACTIONS = [
     (r"\bdoesn'?t\b", "does not"),
     (r"\bdidn'?t\b", "did not"),
     (r"\bisn'?t\b", "is not"),
+    (r"\b(he|she|they|we|you|it|everyone|everybody)'d\b", r"\1 would"),
     (r"\bwanna\b", "want to"),
     (r"\bgonna\b", "going to"),
     (r"\bkms\b", "kill myself"),
@@ -66,6 +67,9 @@ _PATTERNS = [
     r"\b(take|swallow) (all )?(my|the|these) pills\b",
     r"\bjump (off|from|in front of) (a|the|my) (bridge|building|roof|terrace|balcony|train)\b",
     r"\bnot be (here|around) (tomorrow|much longer|anymore)\b",
+    r"\bwould (all )?be (better|fine|happier|okay|ok)( off)? if i (just )?(disappeared|was gone|were gone|was not here|were not here|did not exist|was dead|were dead)\b",
+    r"\bwant to disappear (forever|for good|permanently)\b",
+    r"\bno one would (miss|notice) (me|if i was gone|if i were gone)\b",
 ]
 _CRISIS_RE = re.compile("|".join(f"(?:{p})" for p in _PATTERNS))
 
@@ -83,3 +87,23 @@ def normalize(text: str) -> str:
 
 def is_crisis(text: str) -> bool:
     return bool(_CRISIS_RE.search(normalize(text)))
+
+
+# Questions about medication or diagnosis. The LLM is told not to answer them,
+# but a 7B model does not reliably add a referral, so one is appended verbatim.
+BOUNDARY_NOTE = (
+    "I can't give advice on medication or diagnosis. Please talk to your doctor "
+    "or a mental-health professional about this, and don't change medication without them."
+)
+_MED = r"(medication|medicine|meds|pills|tablets|antidepressants?|ssris?|prescription|dose|dosage)"
+_BOUNDARY_PATTERNS = [
+    rf"\b(stop|stopping|quit|quitting|skip|skipping|start|starting|change|changing|increase|decrease|reduce|double|come off|get off)\b.{{0,40}}\b{_MED}\b",
+    rf"\b{_MED}\b.{{0,40}}\b(stop|quit|skip|change|increase|decrease|reduce|safe|should i|side effects?)\b",
+    r"\b(diagnose|diagnosis)\b",
+    r"\bdo (you think )?i have (depression|anxiety|adhd|bipolar|ocd|ptsd|a disorder|a mental illness|bpd)\b",
+]
+_BOUNDARY_RE = re.compile("|".join(f"(?:{p})" for p in _BOUNDARY_PATTERNS))
+
+
+def needs_boundary_note(text: str) -> bool:
+    return bool(_BOUNDARY_RE.search(normalize(text)))

@@ -14,7 +14,11 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 - **Modes:** local (Ollama, local Whisper) and cloud (Groq, ONNX, no PyTorch) from one configuration module.
 - **Evaluation:** scripts for emotion, ensemble, ONNX, memory and latency; `RESULTS.md`, the model card, the README table and the resume bullets are generated from their JSON output.
 - **Record:** `training/SoulSync_training_and_eval.ipynb` holds every epoch, metric and confusion matrix with saved outputs.
-- **Tests and CI:** 101 pytest cases using fakes; a GitHub Actions workflow.
+- **Knowledge base:** ten draft coping-skill notes in a separate collection, threshold tuned by `eval/knowledge_eval.py`, off by default until you review the text.
+- **Rate limiting:** 12 recordings per user per minute by default.
+- **Reply quality:** automated LLM-as-judge plus keyword rule checks over 20 scripted conversations. The first run exposed a missed indirect crisis phrasing and missing medication referrals, both now fixed.
+- **Licences:** checked against each corpus's source page. TESS is CC BY-NC 4.0 (earlier docs said BY-NC-ND). SAVEE forbids redistribution, so the Kaggle copy is itself a redistribution.
+- **Tests and CI:** 123 pytest cases using fakes; a GitHub Actions workflow.
 
 ## Headline results
 
@@ -53,7 +57,7 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 | 2.4-2.8 Streaming and parsing bugs, LLM errors | Fixed; covered by API tests |
 | 2.11 Shared `None` session | Requests without a valid cookie are rejected |
 | 2.12 Recordings kept on disk | Decoded in memory, never saved |
-| 2.13 No upload limit | `MAX_UPLOAD_MB`; no rate limiting yet |
+| 2.13 No upload limit or rate limiting | `MAX_UPLOAD_MB` and `RATE_LIMIT_PER_MINUTE` (in memory, single process) |
 | 2.14 Third-party CDNs | Removed |
 | 2.15 No disclaimer | Added |
 | 2.19 Emotion2Vec variant unclear | Still unclear: 164 M parameters, which matches neither size on the public model card |
@@ -64,13 +68,14 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 - **Cloud mode against the live Groq API.** No API key. The Groq backends are exercised only through fakes. Groq's Qwen model is a preview model and may emit reasoning text that needs handling; that is untested.
 - **Groq free-tier limits.** Their docs page lists Developer-plan limits only.
 - **Original v1 baseline.** The original weights were unavailable, so the baseline is a reproduction. It reaches 61.9% on its own leaky validation split where your notebook reported 82.9%, so it is weaker than the real v1 model and the before/after gap is overstated.
-- **`wav2vec2-base` versus `wav2vec2-base-960h` comparison.** Skipped in favour of the cross-corpus run.
+- **`wav2vec2-base` versus `wav2vec2-base-960h` comparison. Attempted and failed.** With the main recipe the 960h model's loss became NaN within the first 100 steps. I stopped it after 4.1 minutes rather than retune it, because a different learning rate would no longer be a like-for-like comparison. Recorded in `eval/results/training_base960h.json`.
 - **Git history purge.** Not done; it needs a force-push, which is your decision. Conversation logs and recordings remain recoverable from earlier commits on GitHub.
 - **Licence.** Not chosen.
 - **Hugging Face Hub upload.** Not done; weights exist only on this machine under `models/` and `training/runs/`.
-- **Coping-skills knowledge base and LLM-as-judge evaluation.** Optional items, not started.
+- **Knowledge base switched on.** The notes are a draft in my own words and need your review before `KNOWLEDGE_ENABLED=true`.
+- **Memories in replies.** Retrieval injects the right memory, but the 7B model mentions it in only 1 of 4 judged cases. Not fixed.
+- **A trustworthy reply-quality score.** The judge is the same model as the reply writer and gives near-ceiling scores; only the rule checks are informative.
 - **Browser check.** The server was tested with real models through `curl`. The microphone, live text rendering and browser speech have not been tried in a browser.
-- **Dataset licences.** Stated from general knowledge of the corpora, not checked against their source pages.
 - **CI.** The workflow has never run because nothing has been pushed.
 
 ## Things to know before quoting results
@@ -90,6 +95,7 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 | v1 recipe reproduction, 10 epochs | 10.8 |
 | Main model, 12 epochs (early-stopped, best at epoch 9) | 96.3 |
 | Leave-TESS-out, 8 epochs | 47.8 |
-| **Total** | **155.9 (2.60 h of the 4.5 h budget)** |
+| `wav2vec2-base-960h` comparison, failed (NaN), plus a 30-step diagnostic | 4.1 |
+| **Total** | **160.0 (2.67 h of the 4.5 h budget)** |
 
 The benchmark projected 6.8 minutes per epoch for the main run; it took 8.0.

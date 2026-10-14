@@ -1,0 +1,65 @@
+{
+  "status": "DRAFT, PENDING OWNER REVIEW. Written for SoulSync in plain words; describes widely taught self-help techniques. General wellbeing information, not medical advice. Keep KNOWLEDGE_ENABLED=false until reviewed.",
+  "notes": [
+    {
+      "id": "box_breathing",
+      "title": "Box breathing",
+      "tags": "panic, racing heart, can't breathe, anxious, nervous, calm down, stress",
+      "text": "Box breathing: breathe in slowly through the nose for a count of four, hold for four, breathe out for four, hold for four, and repeat for a few rounds. Slowing the breath can take the edge off a rush of anxiety."
+    },
+    {
+      "id": "grounding_54321",
+      "title": "5-4-3-2-1 grounding",
+      "tags": "panic, overwhelmed, spiralling thoughts, dissociated, unreal, anxious",
+      "text": "5-4-3-2-1 grounding: name five things you can see, four you can touch, three you can hear, two you can smell and one you can taste. Turning attention to the senses can help when thoughts are spiralling."
+    },
+    {
+      "id": "sleep_routine",
+      "title": "Sleep routine",
+      "tags": "can't sleep, insomnia, tired, awake at night, exhausted, sleep",
+      "text": "Sleep routine: keep a regular wake-up time, wind down without screens for the last half hour, keep the bedroom dark and cool, and avoid caffeine late in the day. If you can't sleep after a while, get up and do something calm until you feel sleepy."
+    },
+    {
+      "id": "muscle_relaxation",
+      "title": "Progressive muscle relaxation",
+      "tags": "tense, tight shoulders, physical stress, can't relax, wound up",
+      "text": "Progressive muscle relaxation: tense one muscle group, such as the shoulders, for about five seconds, then let it go and notice the difference. Work slowly from the feet up to the face."
+    },
+    {
+      "id": "worry_time",
+      "title": "Scheduled worry time",
+      "tags": "worrying all the time, overthinking, can't stop thinking, rumination",
+      "text": "Worry time: set aside fifteen minutes at the same time each day to write worries down. When a worry comes up at other times, note it and save it for that slot. Many people find this makes worries feel more contained."
+    },
+    {
+      "id": "move_body",
+      "title": "Gentle movement",
+      "tags": "low mood, sluggish, no energy, stuck, stressed, restless",
+      "text": "Gentle movement: a short walk outside, stretching or a few minutes of any activity you enjoy can lift mood and ease stress, even when motivation is low. Start small."
+    },
+    {
+      "id": "reach_out",
+      "title": "Reaching out",
+      "tags": "lonely, alone, isolated, nobody to talk to, disconnected",
+      "text": "Reaching out: sending a short message to one person you trust, or spending a little time somewhere with other people, can ease loneliness. It doesn't have to be a deep conversation to help."
+    },
+    {
+      "id": "write_it_down",
+      "title": "Writing it down",
+      "tags": "confused feelings, angry, upset, can't make sense, journaling, vent",
+      "text": "Writing it down: putting thoughts and feelings on paper for ten minutes, without editing, can make them feel less tangled and easier to look at."
+    },
+    {
+      "id": "anger_pause",
+      "title": "Pause before reacting",
+      "tags": "angry, furious, losing temper, snapped, irritated, frustrated",
+      "text": "Pause before reacting: when anger rises, step away for a few minutes, breathe out slowly and let the first surge pass before you respond. Coming back to the conversation later is fine."
+    },
+    {
+      "id": "exam_stress",
+      "title": "Breaking tasks down",
+      "tags": "exam stress, deadlines, too much work, overwhelmed, procrastinating",
+      "text": "Breaking tasks down: when work feels too big, pick the smallest next step and do only that, then take a short break. Small finished steps build momentum."
+    }
+  ]
+}

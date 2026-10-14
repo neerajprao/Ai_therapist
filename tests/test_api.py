@@ -198,6 +198,11 @@ def test_stage_directions_are_stripped_across_chunks(client, fake_llm):
     assert talk(client).text.endswith("| I hear  you.")
 
 
+def test_medication_question_gets_fixed_referral(client, fake_stt):
+    fake_stt.text = "Should I stop taking my anxiety medication?"
+    assert talk(client).text.endswith(safety.BOUNDARY_NOTE)
+
+
 def test_server_tts_is_off_by_default(client):
     assert client.post("/get_audio", json={"text": "hello"}).status_code == 409
 
@@ -209,3 +214,26 @@ def test_upload_size_limit(settings, fake_llm, fake_stt, detector, memory):
     c = new_client(small, fake_llm, fake_stt, detector, memory)
     c.get("/")
     assert talk(c).status_code == 413
+
+
+def test_rate_limit_per_user(settings, fake_llm, fake_stt, detector, memory):
+    import dataclasses
+
+    limited = dataclasses.replace(settings, rate_limit_per_minute=2)
+    alice = new_client(limited, fake_llm, fake_stt, detector, memory)
+    bob = new_client(limited, fake_llm, fake_stt, detector, memory)
+    alice.get("/")
+    bob.get("/")
+    assert [talk(alice).status_code for _ in range(3)] == [200, 200, 429]
+    assert "try again in a minute" in talk(alice).json()["detail"]
+    assert talk(bob).status_code == 200, "one user's limit must not block another"
+
+
+def test_rate_limiter_window_slides():
+    from soulsync.api import RateLimiter
+
+    limiter = RateLimiter(2)
+    assert limiter.allow("u", now=0) and limiter.allow("u", now=10)
+    assert not limiter.allow("u", now=59)
+    assert limiter.allow("u", now=60.5)
+    assert RateLimiter(0).allow("u", now=0)

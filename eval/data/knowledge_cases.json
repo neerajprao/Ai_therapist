@@ -1,0 +1,35 @@
+{
+  "description": "Synthetic messages for the coping-skills knowledge base. 'relevant' messages should retrieve the named note; 'unrelated' should retrieve nothing. Written by the project author; no real user data.",
+  "relevant": [
+    {"query": "My heart is pounding and I feel like I can't get enough air", "target": "box_breathing"},
+    {"query": "I'm so tense before my interview that my breathing is all over the place", "target": "box_breathing"},
+    {"query": "Everything feels unreal and my thoughts won't slow down", "target": "grounding_54321"},
+    {"query": "I'm spiralling and I need something to bring me back to the present", "target": "grounding_54321"},
+    {"query": "I've been lying awake until three every night", "target": "sleep_routine"},
+    {"query": "I just can't fall asleep anymore and I'm exhausted all day", "target": "sleep_routine"},
+    {"query": "My shoulders and jaw are clenched all the time", "target": "muscle_relaxation"},
+    {"query": "My body feels wound up and I can't physically relax", "target": "muscle_relaxation"},
+    {"query": "I keep overthinking every little thing all day long", "target": "worry_time"},
+    {"query": "The same worries go round and round in my head", "target": "worry_time"},
+    {"query": "I have no energy and I've been stuck on the couch for days", "target": "move_body"},
+    {"query": "I feel so lonely, there's nobody I talk to anymore", "target": "reach_out"},
+    {"query": "I feel cut off from everyone since I moved cities", "target": "reach_out"},
+    {"query": "My feelings are a jumbled mess and I can't make sense of them", "target": "write_it_down"},
+    {"query": "I lost my temper and yelled at my brother again", "target": "anger_pause"},
+    {"query": "I get furious so quickly and then regret what I say", "target": "anger_pause"},
+    {"query": "I have three deadlines this week and I don't know where to start", "target": "exam_stress"},
+    {"query": "My exams are coming up and the syllabus feels impossible", "target": "exam_stress"}
+  ],
+  "unrelated": [
+    {"query": "What is the capital of Australia"},
+    {"query": "I watched a great movie last night"},
+    {"query": "Can you recommend a good biryani recipe"},
+    {"query": "My laptop keeps restarting on its own"},
+    {"query": "The weather has been really nice this week"},
+    {"query": "I'm planning a trip to the mountains next month"},
+    {"query": "My cousin is getting married in December"},
+    {"query": "What's the difference between a list and a tuple in Python"},
+    {"query": "I bought a new pair of running shoes"},
+    {"query": "Our team won the quiz competition at college"}
+  ]
+}

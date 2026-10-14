@@ -44,7 +44,7 @@ TESS has two speakers with 1,000 clips each, so both are in train and the held-o
 | Selection | best validation macro-F1, early stopping with patience 3 |
 | Result | 12 epochs run, best at epoch 9 (validation macro-F1 81.8%), 96.33 minutes |
 
-Total training wall-clock across all runs in this project: 155.9 minutes.
+Total training wall-clock across all runs in this project: 160.0 minutes.
 
 ## Metrics
 
@@ -102,4 +102,4 @@ v1 discarded every Emotion2Vec score through a label mismatch. With the mapping 
 
 ## Licences
 
-RAVDESS: CC BY-NC-SA 4.0. CREMA-D: ODbL 1.0. TESS: CC BY-NC-ND 4.0. SAVEE: research use by registration. Base model `facebook/wav2vec2-base`: Apache-2.0. Because the training data is largely non-commercial, treat these weights as non-commercial research output. Confirm the corpus terms at their source pages before redistributing the weights.
+RAVDESS: CC BY-NC-SA 4.0. CREMA-D: ODbL 1.0 (contents DbCL 1.0). TESS: CC BY-NC 4.0. SAVEE: registration licence, no redistribution. Base model `facebook/wav2vec2-base`: Apache-2.0. Checked against the source pages on 2026-10-14; details in [DATASET.md](DATASET.md). Because two corpora are non-commercial, treat these weights as non-commercial research output.

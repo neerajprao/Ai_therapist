@@ -161,7 +161,7 @@ v1 discarded every Emotion2Vec score through a label mismatch. With the mapping 
 
 ## Licences
 
-RAVDESS: CC BY-NC-SA 4.0. CREMA-D: ODbL 1.0. TESS: CC BY-NC-ND 4.0. SAVEE: research use by registration. Base model `facebook/wav2vec2-base`: Apache-2.0. Because the training data is largely non-commercial, treat these weights as non-commercial research output. Confirm the corpus terms at their source pages before redistributing the weights.
+RAVDESS: CC BY-NC-SA 4.0. CREMA-D: ODbL 1.0 (contents DbCL 1.0). TESS: CC BY-NC 4.0. SAVEE: registration licence, no redistribution. Base model `facebook/wav2vec2-base`: Apache-2.0. Checked against the source pages on 2026-10-14; details in [DATASET.md](DATASET.md). Because two corpora are non-commercial, treat these weights as non-commercial research output.
 """
     (ROOT / "docs" / "MODEL_CARD.md").write_text(card)
 

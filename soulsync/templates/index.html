@@ -84,6 +84,7 @@
                 {% endif %}
                 {% for item in data_flow.stored_on_server %}<li>Stored: {{ item }}.</li>{% endfor %}
                 <li>Never stored: voice recordings. They are processed in memory and discarded.</li>
+                {% if knowledge_enabled %}<li>Replies may include general wellbeing tips (breathing, grounding, sleep). These are general information, not medical advice.</li>{% endif %}
                 <li>The detected emotion is an estimate from acted-speech training data and is often wrong.</li>
                 <li>This browser is recognised by a cookie for up to a year so earlier conversations can be recalled.</li>
             </ul>

@@ -160,17 +160,44 @@ One warm-up request excluded. Sequential requests, single user. No text-to-speec
 
 _Not run: `eval/results/latency_cloud.json` does not exist. Cloud mode needs a Groq API key._
 
-## 5. Cloud container footprint
+## 5. Coping-skills knowledge base (off by default)
+
+10 short notes, same embedding model as memory. Threshold swept on half the messages; chosen `KNOWLEDGE_MAX_DISTANCE=0.75`.
+
+| Held-out half | Value |
+|---|---|
+| Correct note retrieved (top-1) | 88.9% of 9 |
+| Anything retrieved for unrelated messages | 0.0% of 5 |
+
+Caveat: Very small synthetic set (9 relevant and 5 unrelated messages in the held-out half), written by the project author. Treat it as a sanity check of the threshold, not a measurement worth quoting. Source: `knowledge_eval.json`.
+
+## 6. Reply quality (automated LLM-as-judge, not human evaluation)
+
+20 scripted conversations, replies from `ollama:qwen2.5:7b-instruct`, judged by `ollama:qwen2.5:7b-instruct` on a 1-5 rubric.
+
+| Run | Empathy | Relevance | Memory use | Safety | Memory referenced (rule) | No invented memory (rule) | Referral present (rule) |
+|---|---|---|---|---|---|---|---|
+| First run (before fixes) | 4.2 | 5 | 5 | 5 | - | - | - |
+| Current | 4.1 | 5 | 5 | 5 | 1/4 | 3/3 | 6/6 |
+
+**How to read this.** The judge is the same model that wrote the replies and scores almost everything 4-5, including replies that the keyword rules show are missing a referral or ignore a relevant memory. The judge scores are therefore not informative; the rule checks are cruder but independent.
+
+What the first run exposed, and what changed: an indirect crisis phrasing ("everyone would be fine if I just disappeared") got an ordinary LLM reply, so crisis patterns were added; medication and diagnosis questions got no referral, so a fixed referral line is now appended for them. A first run (judge_eval_prompt_v1.json) exposed a missed crisis phrasing, unused memories and a missing medication referral. The safety patterns, system prompt and memory note were changed, and a fixed referral line for medication and diagnosis questions was added, in response; so this run is not independent of that set.
+
+Still weak: the model referenced a relevant earlier-session memory in 1 of 4 cases, although retrieval injected it every time. Source: `judge_eval.json`, `judge_eval_prompt_v1.json`.
+
+## 7. Cloud container footprint
 
 _Not run: `eval/results/cloud_memory.json` does not exist. Docker was not installed on the development machine._
 
-## 6. Training time
+## 8. Training time
 
 | Run | Epochs | Best epoch | Minutes | Status | Source |
 |---|---|---|---|---|---|
+| base960h | 0 | 0 | 4.13 | failed | `training_base960h.json` |
 | main (timing benchmark) | - | - | 0.95 | benchmark | `training_benchmark_main.json` |
 | main | 12 | 9 | 96.33 | early_stopped_after_epoch_12 | `training_main.json` |
 | no_tess | 8 | 8 | 47.8 | completed | `training_no_tess.json` |
 | v1_repro | 10 | 8 | 10.79 | completed | `training_v1_repro.json` |
 
-Total training wall-clock: **155.9 minutes** (2.60 h) against a budget of 4.5 h. Includes per-epoch validation.
+Total training wall-clock: **160.0 minutes** (2.67 h) against a budget of 4.5 h. Includes per-epoch validation.

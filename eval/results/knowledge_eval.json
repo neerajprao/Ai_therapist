@@ -1,0 +1,104 @@
+{
+  "notes": 10,
+  "embedding_model": "all-MiniLM-L6-v2 (ONNX, ChromaDB default)",
+  "dev_sweep": [
+    {
+      "threshold": 0.3,
+      "top1_hit_rate": 0.0,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.5,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    },
+    {
+      "threshold": 0.35,
+      "top1_hit_rate": 0.0,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.5,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    },
+    {
+      "threshold": 0.4,
+      "top1_hit_rate": 0.0,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.5,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    },
+    {
+      "threshold": 0.45,
+      "top1_hit_rate": 0.0,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.5,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    },
+    {
+      "threshold": 0.5,
+      "top1_hit_rate": 0.0,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.5,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    },
+    {
+      "threshold": 0.55,
+      "top1_hit_rate": 0.1111,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.5556,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    },
+    {
+      "threshold": 0.6,
+      "top1_hit_rate": 0.4444,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.7222,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    },
+    {
+      "threshold": 0.65,
+      "top1_hit_rate": 0.5556,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.7778,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    },
+    {
+      "threshold": 0.7,
+      "top1_hit_rate": 0.5556,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.7778,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    },
+    {
+      "threshold": 0.75,
+      "top1_hit_rate": 0.6667,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.8333,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    },
+    {
+      "threshold": 0.8,
+      "top1_hit_rate": 0.6667,
+      "false_retrieval_rate": 0.0,
+      "balanced_score": 0.8333,
+      "n_relevant": 9,
+      "n_unrelated": 5
+    }
+  ],
+  "chosen_max_distance": 0.75,
+  "test": {
+    "threshold": 0.75,
+    "top1_hit_rate": 0.8889,
+    "false_retrieval_rate": 0.0,
+    "balanced_score": 0.9444,
+    "n_relevant": 9,
+    "n_unrelated": 5
+  },
+  "caveat": "Very small synthetic set (9 relevant and 5 unrelated messages in the held-out half), written by the project author. Treat it as a sanity check of the threshold, not a measurement worth quoting."
+}

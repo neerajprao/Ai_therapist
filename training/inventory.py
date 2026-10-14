@@ -178,10 +178,10 @@ def main() -> None:
 
 
 LICENCES = [
-    ("RAVDESS", "CC BY-NC-SA 4.0", "Livingstone & Russo, 2018. Non-commercial, share-alike. https://zenodo.org/record/1188976"),
-    ("CREMA-D", "Open Database License (ODbL) 1.0", "Cao et al., 2014. https://github.com/CheyneyComputerScience/CREMA-D"),
-    ("TESS", "CC BY-NC-ND 4.0", "Pichora-Fuller & Dupuis, 2020. Non-commercial, no derivatives. https://doi.org/10.5683/SP2/E8H2MF"),
-    ("SAVEE", "Research use only, by registration", "Haq & Jackson, 2009. http://kahlan.eps.surrey.ac.uk/savee/"),
+    ("RAVDESS", "CC BY-NC-SA 4.0 (commercial licences sold separately)", "Livingstone & Russo, 2018. https://zenodo.org/records/1188976"),
+    ("CREMA-D", "Open Database License 1.0; contents under Database Contents License 1.0", "Cao et al., 2014. https://github.com/CheyneyComputerScience/CREMA-D"),
+    ("TESS", "CC BY-NC 4.0", "Pichora-Fuller & Dupuis, 2020. https://doi.org/10.5683/SP2/E8H2MF"),
+    ("SAVEE", "Registration licence: use within the licensee's organisation; no redistribution in any form", "Haq & Jackson. https://cvssp.org/savee/Register.html"),
 ]
 
 
@@ -245,7 +245,7 @@ Sample rates: {s["samplerates"]}. Everything is resampled to 16 kHz.
 
 {md_table(["Corpus", "Licence", "Reference"], [list(row) for row in LICENCES])}
 
-These are the terms published by each corpus's authors as I understand them; confirm against the source pages before publishing model weights. Three of the four restrict commercial use, so a model trained on this data should be treated as non-commercial research output.
+Checked against each source page on 2026-10-14. RAVDESS and TESS are non-commercial. SAVEE's licence forbids redistribution, so the Kaggle copy used here is itself a redistribution; for anything beyond personal study, register with the SAVEE authors and use their copy. Treat a model trained on this data as non-commercial research output.
 
 All four corpora are acted, English-language recordings. None contains spontaneous or clinical speech.
 """

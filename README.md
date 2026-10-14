@@ -31,7 +31,9 @@ flowchart LR
 - **Speech emotion recognition.** A Wav2Vec2 model fine-tuned on four acted-speech corpora with a speaker-independent split, exported to ONNX and quantised to INT8.
 - **Long-term memory (RAG).** User messages are embedded with all-MiniLM-L6-v2 and stored in ChromaDB. Retrieval is filtered to the same user, excludes the current session, and drops anything beyond a tuned cosine-distance threshold.
 - **Forget me.** One button deletes everything stored for that browser's user.
-- **Safety layer.** Crisis and self-harm phrasing bypasses the LLM and returns a fixed message that suggests helplines. The app never places calls or contacts anyone.
+- **Safety layer.** Crisis and self-harm phrasing bypasses the LLM and returns a fixed message that suggests helplines. Questions about medication or diagnosis get a fixed "talk to your doctor" line appended. The app never places calls or contacts anyone.
+- **Coping-skills knowledge base (optional, off by default).** Ten short general-wellbeing notes (breathing, grounding, sleep and similar) in a separate ChromaDB collection, offered as gentle suggestions and labelled as general information, not medical advice.
+- **Rate limiting.** Each user can send a limited number of recordings per minute.
 - **Two modes from one codebase**, selected by environment variables: local (nothing leaves the machine) and cloud (Groq for LLM and speech-to-text).
 - **Reproducible evaluation.** Every number below is produced by a script and stored as JSON in `eval/results/`.
 
@@ -47,7 +49,7 @@ flowchart LR
 | ONNX INT8 vs PyTorch | 378.3 MB to 122.1 MB (67.7% smaller); CPU p50 70.2 ms to 65.5 ms; macro-F1 +0.4 points | `onnx_benchmark.json` |
 | Memory retrieval, held-out half | Hit@3 81.0%, false recall 0.0%, 0 cross-user leaks | `memory_eval.json` |
 | Local latency, upload to first reply token | p50 0.65 s, p95 0.93 s over 24 clips | `latency_local.json` |
-| Tests | 101 pytest cases, no model downloads | `tests/` |
+| Tests | 123 pytest cases, no model downloads | `tests/` |
 
 Caveats that matter: the emotion data is acted English speech; the v1 baseline is a reproduction of the old recipe, not the original weights; Emotion2Vec's training data probably overlaps the test corpora, so the ensemble figure is optimistic; the memory test set is small and synthetic.
 <!-- RESULTS:END -->
@@ -129,20 +131,22 @@ The tests use fake models and need no downloads. GitHub Actions runs them on eve
 - **Small test set.** 14 held-out speakers; confidence intervals cover clip sampling only.
 - **Emotion2Vec's score is not a clean result.** It is a public pretrained model whose training data probably overlaps these corpora.
 - **Memory evaluation is synthetic and small**, written by the project author.
-- **No human evaluation of reply quality.** No clinical validation of any kind.
+- **The reply model often ignores recalled memories.** Retrieval works, but in the automated check Qwen 2.5 7B referenced a relevant earlier memory in only 1 of 4 cases.
+- **No human evaluation of reply quality.** The automated LLM-as-judge scores are close to the ceiling and not informative. No clinical validation of any kind.
 - **Single-process design.** Live chat history is held in memory, so it is lost on restart and does not scale across workers.
 
 ## Future work
 
 - Evaluate on spontaneous speech (for example IEMOCAP or MSP-Podcast, licence permitting).
 - Build and measure the cloud image; hosted vector database for persistent cloud memory.
-- Human-rated or LLM-judged reply quality.
+- Human-rated reply quality, or a stronger, independent judge model.
 - A larger, independently written memory test set.
-- A reviewed coping-skills knowledge base as a second retrieval source.
+- Get the reply model to use recalled memories more reliably (prompting or a larger model).
+- Review the coping-skills notes and enable the knowledge base.
 
 ## Credits and licences
 
-Datasets (not redistributed here): RAVDESS (CC BY-NC-SA 4.0), CREMA-D (ODbL 1.0), TESS (CC BY-NC-ND 4.0), SAVEE (research use by registration), via the Kaggle collection `uldisvalainis/audio-emotions`. See [docs/DATASET.md](docs/DATASET.md). Because several of these are non-commercial, the trained emotion model should be treated as non-commercial research output.
+Datasets (not redistributed here): RAVDESS (CC BY-NC-SA 4.0), CREMA-D (ODbL 1.0), TESS (CC BY-NC 4.0), SAVEE (registration licence, no redistribution), via the Kaggle collection `uldisvalainis/audio-emotions`. See [docs/DATASET.md](docs/DATASET.md). Because two of these are non-commercial, the trained emotion model should be treated as non-commercial research output.
 
 Models: `facebook/wav2vec2-base` (Apache-2.0), Whisper (MIT) via openai-whisper or faster-whisper, Qwen 2.5 via Ollama (check the licence of the specific tag), all-MiniLM-L6-v2 (Apache-2.0) via ChromaDB, Emotion2Vec via FunASR (see its model card for terms).
 

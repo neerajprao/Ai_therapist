@@ -9,7 +9,10 @@ import hashlib
 import hmac
 import logging
 import re
+import threading
+import time
 import uuid
+from collections import defaultdict, deque
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, Response, UploadFile
@@ -44,6 +47,7 @@ class HealthResponse(BaseModel):
     emotion_available: bool
     emotion2vec_enabled: bool
     memory_enabled: bool
+    knowledge_enabled: bool
     tts_backend: str
 
 
@@ -71,6 +75,28 @@ def _verify(cookie: str | None, secret: str) -> str | None:
     return uid if hmac.compare_digest(cookie, _sign(uid, secret)) else None
 
 
+class RateLimiter:
+    """Sliding one-minute window per user, in memory (single process)."""
+
+    def __init__(self, per_minute: int):
+        self.per_minute = per_minute
+        self._hits: dict[str, deque] = defaultdict(deque)
+        self._lock = threading.Lock()
+
+    def allow(self, key: str, now: float | None = None) -> bool:
+        if self.per_minute <= 0:
+            return True
+        now = time.monotonic() if now is None else now
+        with self._lock:
+            hits = self._hits[key]
+            while hits and now - hits[0] >= 60:
+                hits.popleft()
+            if len(hits) >= self.per_minute:
+                return False
+            hits.append(now)
+            return True
+
+
 def create_app(
     settings: Settings | None = None,
     *,
@@ -78,6 +104,7 @@ def create_app(
     stt: STT | None = None,
     emotion: EmotionDetector | None = None,
     memory: MemoryStore | None = None,
+    knowledge=None,
 ) -> FastAPI:
     """Build the app. Tests pass fakes for llm/stt/emotion/memory."""
     settings = settings or load_settings()
@@ -88,8 +115,13 @@ def create_app(
     emotion = emotion or build_detector(settings)
     if memory is None:
         memory = build_memory(settings)
-    engine = ChatEngine(llm, memory, max_turns=settings.history_max_turns)
+    if knowledge is None and settings.knowledge_enabled:
+        from .knowledge import build_knowledge
+
+        knowledge = build_knowledge(settings)
+    engine = ChatEngine(llm, memory, max_turns=settings.history_max_turns, knowledge=knowledge)
     max_bytes = settings.max_upload_mb * 1024 * 1024
+    limiter = RateLimiter(settings.rate_limit_per_minute)
 
     app = FastAPI(title="SoulSync", version=__version__)
     app.state.settings = settings
@@ -121,6 +153,7 @@ def create_app(
                 "tts_backend": settings.tts_backend,
                 "data_flow": settings.data_flow(),
                 "memory_enabled": memory is not None,
+                "knowledge_enabled": knowledge is not None,
                 "helpline": f"{safety.HELPLINE_NAME} {safety.HELPLINE_NUMBERS}",
                 "emergency": safety.EMERGENCY_NUMBER,
             },
@@ -148,12 +181,13 @@ def create_app(
             emotion_available=emotion.available,
             emotion2vec_enabled=emotion.secondary is not None,
             memory_enabled=memory is not None,
+            knowledge_enabled=knowledge is not None,
             tts_backend=settings.tts_backend,
         )
 
     @app.post(
         "/process_audio_stream",
-        responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}, 413: {"model": ErrorResponse}},
+        responses={400: {"model": ErrorResponse}, 401: {"model": ErrorResponse}, 413: {"model": ErrorResponse}, 429: {"model": ErrorResponse}},
     )
     def process_audio_stream(
         request: Request,
@@ -163,6 +197,8 @@ def create_app(
         """Plain-text stream. First chunk is `METADATA|<transcript>|<emotion>|`,
         followed by the reply as it is generated."""
         user_id = require_user(request)
+        if not limiter.allow(user_id):
+            raise HTTPException(429, "You're sending messages very quickly. Please take a breath and try again in a minute.")
         if not _SESSION_RE.match(session_id):
             raise HTTPException(400, "Invalid session_id.")
         raw = audio.file.read(max_bytes + 1)

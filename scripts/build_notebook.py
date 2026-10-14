@@ -123,11 +123,13 @@ COMMANDS = {
     "v1_repro": "training.train --run-name v1_repro --split split_v1_repro.csv --base-model facebook/wav2vec2-base-960h --epochs 10 --batch-size 4 --accum 4 --lr 3e-5 --warmup-frac 0 --patience 10 --select accuracy --no-random-crop --no-class-weights",
     "main": "training.train --run-name main --epochs 15 --patience 3 --max-minutes 170",
     "no_tess": "training.train --run-name no_tess --exclude-corpus TESS --epochs 8 --patience 3 --max-minutes 60",
+    "base960h": "training.train --run-name base960h --base-model facebook/wav2vec2-base-960h --epochs 15 --patience 3 --max-minutes 100",
 }
 DESCRIPTION = {
     "v1_repro": "Baseline: the old notebook's recipe reproduced (RAVDESS speech+song only, split by FILE, wav2vec2-base-960h). Its validation score is leaky by design.",
     "main": "The v2 model: four corpora, speaker-independent split, wav2vec2-base.",
     "no_tess": "Cross-corpus check: same recipe trained without TESS, later tested on TESS.",
+    "base960h": "Comparison: the main recipe on wav2vec2-base-960h instead of wav2vec2-base. FAILED: loss became NaN in the first epoch; stopped by hand.",
 }
 total_minutes = 0.0
 for name, cmd in COMMANDS.items():
@@ -142,7 +144,12 @@ for name, cmd in COMMANDS.items():
     print({k: cfg[k] for k in ["base_model", "split", "exclude_corpus", "epochs", "batch_size", "accum", "lr", "weight_decay", "warmup_frac",
                                "patience", "select", "no_random_crop", "no_class_weights", "seed", "device", "train_clips", "val_clips",
                                "trainable_params", "steps_per_epoch"]})
-    print("class counts:", cfg["class_counts"], "| class weights:", cfg["class_weights"])
+    print("class counts:", cfg.get("class_counts"), "| class weights:", cfg.get("class_weights"))
+    if not log["history"]:
+        print("NO COMPLETED EPOCHS. reason:", log.get("reason", ""))
+        print("logged steps:", log.get("logged_steps"))
+        raw(log, f"Raw record for {name}")
+        continue
     hist = pd.DataFrame(log["history"]).set_index("epoch")
     display(hist)
     fig, ax = plt.subplots(1, 2, figsize=(11, 3.4))
@@ -248,7 +255,27 @@ for mode in ("local", "local_w2v_only", "cloud"):
     if "local_stt_comparison" in lat:
         display(Markdown("**Local Whisper engines compared**")); display(pd.DataFrame(lat["local_stt_comparison"]).T)
     print(lat["notes"]); raw(lat)"""),
-    md("## 9. Every result file, for reference"),
+    md("""## 9. Coping-skills knowledge base (off by default; notes pending review)
+
+Script: `python -m eval.knowledge_eval`. Cases in `eval/data/knowledge_cases.json`."""),
+    code("""run("eval.knowledge_eval", RERUN_EVAL)
+ke = load("knowledge_eval.json")
+if ke:
+    display(pd.DataFrame(ke["dev_sweep"]).set_index("threshold"))
+    print("chosen KNOWLEDGE_MAX_DISTANCE:", ke["chosen_max_distance"]); print("held-out:", ke["test"]); print("CAVEAT:", ke["caveat"]); raw(ke)"""),
+    md("""## 10. Reply quality: automated LLM-as-judge (NOT human evaluation)
+
+Script: `python -m eval.judge_eval`. 20 scripted conversations in `eval/data/judge_conversations.json`. The judge is the same Qwen 2.5 7B model that writes the replies, so its scores are biased upwards; the keyword rule checks are independent of it. The first run is kept as `judge_eval_prompt_v1.json`; fixes were made in response to it."""),
+    code("""run("eval.judge_eval", RERUN_EVAL)
+for name in ("judge_eval_prompt_v1.json", "judge_eval.json"):
+    j = load(name)
+    if not j: continue
+    display(Markdown(f"**{name}**"))
+    print("mean scores:", j["mean_scores"]); print("share 4-5:", j["share_scoring_4_or_5"])
+    if "rule_checks" in j: print("rule checks [passed, applicable]:", j["rule_checks"])
+    print("crisis layer fired on:", j["crisis_layer_fired"]); print(j.get("history_note", ""))
+    display(pd.DataFrame([{"id": r["id"], "category": r["category"], **r["scores"], **r.get("rule_checks", {}), "reply": r["final_reply"]} for r in j["records"]]))"""),
+    md("## 11. Every result file, for reference"),
     code("""for path in sorted(RESULTS.iterdir()):
     print(f"{path.stat().st_size:>9,d} bytes  {path.name}")"""),
 ]

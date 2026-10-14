@@ -16,7 +16,8 @@ log = logging.getLogger(__name__)
 SYSTEM_PROMPT = (
     "You are Samantha, a calm, warm AI companion for supportive conversation. "
     "You are not a therapist or a doctor: never claim to be one, never diagnose, "
-    "and never give medical advice. "
+    "and never give medical advice. If asked for a diagnosis or about medication, say kindly "
+    "that you can't help with that and suggest talking to a doctor or mental-health professional. "
     "User messages arrive as '[User Tone: <Emotion>] <Message>', where the tone was "
     "estimated from their voice and may be wrong. Let it shape your empathy, but never "
     "mention the tag. "
@@ -75,15 +76,17 @@ def build_messages(
     user_content: str,
     memory_note: str | None,
     max_turns: int,
+    knowledge_note: str | None = None,
 ) -> list[Message]:
-    """System prompt + last `max_turns` exchanges + (temporary memory note) + new message.
+    """System prompt + last `max_turns` exchanges + (temporary notes) + new message.
 
-    The memory note is built fresh each turn and is never written to history.
+    Memory and knowledge notes are built fresh each turn and never written to history.
     """
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
     messages += history[-2 * max_turns :]
-    if memory_note:
-        messages.append({"role": "system", "content": memory_note})
+    for note in (memory_note, knowledge_note):
+        if note:
+            messages.append({"role": "system", "content": note})
     messages.append({"role": "user", "content": user_content})
     return messages
 
@@ -117,9 +120,11 @@ class ChatEngine:
         memory: MemoryStore | None,
         sessions: SessionStore | None = None,
         max_turns: int = 8,
+        knowledge=None,
     ):
         self.llm = llm
         self.memory = memory
+        self.knowledge = knowledge
         self.sessions = sessions or SessionStore()
         self.max_turns = max_turns
 
@@ -146,8 +151,14 @@ class ChatEngine:
             return
 
         memory_note = self.recall(user_id, session_id, text)
+        knowledge_note = None
+        if self.knowledge is not None:
+            from .knowledge import format_notes
+
+            notes = self.knowledge.search(text)
+            knowledge_note = format_notes(notes) if notes else None
         messages = build_messages(
-            self.sessions.get(user_id, session_id), user_content, memory_note, self.max_turns
+            self.sessions.get(user_id, session_id), user_content, memory_note, self.max_turns, knowledge_note
         )
 
         cleaner = ActionFilter()
@@ -162,6 +173,11 @@ class ChatEngine:
             # Tell the user plainly; do not save a half reply as if it were real.
             yield ("" if not reply else " ... ") + exc.user_message
             return
+
+        if safety.needs_boundary_note(text):
+            addition = (" " if reply and not reply.endswith(" ") else "") + safety.BOUNDARY_NOTE
+            reply += addition
+            yield addition
 
         reply = reply.strip()
         if not reply:
