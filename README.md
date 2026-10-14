@@ -70,7 +70,7 @@ ollama pull qwen2.5:7b-instruct
 cp .env.example .env            # defaults are fine for local mode
 ```
 
-The emotion model weights are not in git. Either train them ([README_TRAINING.md](README_TRAINING.md)) or place a trained model at `models/emotion_w2v2/`. Without it the app still runs and shows the emotion as "Unavailable".
+The emotion model weights are not in git. Download them from the Hugging Face Hub with `python scripts/hub.py download --repo npr1138/soulsync-emotion-wav2vec2` ([model page](https://huggingface.co/npr1138/soulsync-emotion-wav2vec2)), or train them yourself ([README_TRAINING.md](README_TRAINING.md)). Without them the app still runs and shows the emotion as "Unavailable".
 
 Local mode also ensembles a second emotion model, Emotion2Vec (1.9 GB): `git lfs pull --include models/emotion2vec/model.pt` and `pip install funasr modelscope`. If it is missing the app logs an error and uses Wav2Vec2 alone; set `ENABLE_EMOTION2VEC=false` to switch it off.
 
@@ -150,4 +150,4 @@ Datasets (not redistributed here): RAVDESS (CC BY-NC-SA 4.0), CREMA-D (ODbL 1.0)
 
 Models: `facebook/wav2vec2-base` (Apache-2.0), Whisper (MIT) via openai-whisper or faster-whisper, Qwen 2.5 via Ollama (check the licence of the specific tag), all-MiniLM-L6-v2 (Apache-2.0) via ChromaDB, Emotion2Vec via FunASR (see its model card for terms).
 
-This repository does not have a licence file yet.
+Source code: [MIT](LICENSE). Trained emotion-model weights: CC BY-NC-SA 4.0, because they are derived from non-commercial datasets. Datasets and third-party models keep their own licences.

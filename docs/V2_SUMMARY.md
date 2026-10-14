@@ -13,6 +13,7 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 - **Speech output:** browser Web Speech API by default; macOS `say` optional.
 - **Modes:** local (Ollama, local Whisper) and cloud (Groq, ONNX, no PyTorch) from one configuration module.
 - **Evaluation:** scripts for emotion, ensemble, ONNX, memory and latency; `RESULTS.md`, the model card, the README table and the resume bullets are generated from their JSON output.
+- **Weights published:** https://huggingface.co/npr1138/soulsync-emotion-wav2vec2 (PyTorch + INT8 ONNX, CC BY-NC-SA 4.0).
 - **Record:** `training/SoulSync_training_and_eval.ipynb` holds every epoch, metric and confusion matrix with saved outputs.
 - **Knowledge base:** ten draft coping-skill notes in a separate collection, threshold tuned by `eval/knowledge_eval.py`, off by default until you review the text.
 - **Rate limiting:** 12 recordings per user per minute by default.
@@ -50,7 +51,7 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 | 1.10 Silent failures | Typed errors, logging, "Unavailable" shown in the UI |
 | 1.11 Unbounded history | Last `HISTORY_MAX_TURNS` exchanges |
 | 1.12 Personal data in git | Untracked and ignored. **Still present in earlier commits** |
-| 1.13 No tests, eval, Docker, CI, licence | Tests, eval and CI added. Dockerfile written but not built. No licence yet |
+| 1.13 No tests, eval, Docker, CI, licence | Tests, eval and CI added. MIT licence for code, CC BY-NC-SA 4.0 for weights. Dockerfile written but not built |
 | 2.1 Keyword override | Removed |
 | 2.2 No crisis handling | Safety layer with tests |
 | 2.3 Train/serve mismatch | One shared preprocessing function |
@@ -70,8 +71,6 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 - **Original v1 baseline.** The original weights were unavailable, so the baseline is a reproduction. It reaches 61.9% on its own leaky validation split where your notebook reported 82.9%, so it is weaker than the real v1 model and the before/after gap is overstated.
 - **`wav2vec2-base` versus `wav2vec2-base-960h` comparison. Attempted and failed.** With the main recipe the 960h model's loss became NaN within the first 100 steps. I stopped it after 4.1 minutes rather than retune it, because a different learning rate would no longer be a like-for-like comparison. Recorded in `eval/results/training_base960h.json`.
 - **Git history purge.** Not done; it needs a force-push, which is your decision. Conversation logs and recordings remain recoverable from earlier commits on GitHub.
-- **Licence.** Not chosen.
-- **Hugging Face Hub upload.** Not done; weights exist only on this machine under `models/` and `training/runs/`.
 - **Knowledge base switched on.** The notes are a draft in my own words and need your review before `KNOWLEDGE_ENABLED=true`.
 - **Memories in replies.** Retrieval injects the right memory, but the 7B model mentions it in only 1 of 4 judged cases. Not fixed.
 - **A trustworthy reply-quality score.** The judge is the same model as the reply writer and gives near-ceiling scores; only the rule checks are informative.
