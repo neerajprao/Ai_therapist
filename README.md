@@ -50,6 +50,7 @@ flowchart LR
 | Memory retrieval, held-out half | Hit@3 81.0%, false recall 0.0%, 0 cross-user leaks | `memory_eval.json` |
 | Local latency, upload to first reply token | p50 0.72 s, p95 1.41 s over 24 clips | `latency_local.json` |
 | Cloud latency (Groq), upload to first reply token | p50 0.62 s, p95 0.78 s over 24 clips, measured from a laptop | `latency_cloud.json` |
+| Cloud Docker image (no PyTorch) | 1502.4 MB; served 6/6 real requests under a 512 MB memory cap, not OOM-killed (peak 435.7 MiB without a cap) | `cloud_memory.json` |
 | Tests | 123 pytest cases, no model downloads | `tests/` |
 
 Caveats that matter: the emotion data is acted English speech; the v1 baseline is a reproduction of the old recipe, not the original weights; Emotion2Vec's training data probably overlaps the test corpora, so the ensemble figure is optimistic; the memory test set is small and synthetic.
@@ -82,10 +83,9 @@ uvicorn soulsync.api:app --port 5050
 
 ### Cloud mode
 
-Designed for a small container: no PyTorch, Groq for the LLM and speech-to-text, the INT8 ONNX emotion model, ChromaDB memory, browser speech output.
+Designed for a small container: no PyTorch, Groq for the LLM and speech-to-text, the INT8 ONNX emotion model, ChromaDB memory, browser speech output. The Docker build downloads the emotion model from the Hugging Face Hub (pinned revision, checksum verified), so hosts can build straight from this repository.
 
 ```bash
-python -m training.export_onnx                 # creates models/emotion_w2v2_int8.onnx
 export GROQ_API_KEY=...  SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
 docker compose up --build                      # http://localhost:8000
 ```
@@ -94,7 +94,7 @@ docker compose up --build                      # http://localhost:8000
 - Speech-to-text: `whisper-large-v3-turbo`.
 - Rate limits depend on your Groq plan; see the limits page in your Groq account. When Groq returns HTTP 429 the app replies with a plain "please wait a minute" message.
 - Cloud mode has been tested live against Groq from a laptop (see `eval/results/latency_cloud.json`).
-- **The Docker image has not been built or measured yet.** Its size and peak memory against a 512 MB limit are not known.
+- The image has been built and run under a 512 MB memory cap with real requests (see `eval/results/cloud_memory.json` and [RESULTS.md](RESULTS.md)). Re-measure with `python -m eval.cloud_memory`.
 - **Memories may not persist on free hosts.** Many free tiers wipe the disk on restart, which erases the ChromaDB store. Mount a persistent volume, or point the memory layer at a hosted vector database; that option is documented here but not implemented.
 
 ### Configuration

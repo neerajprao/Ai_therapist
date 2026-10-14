@@ -1,0 +1,4 @@
+image 1502.4 MB (linux/arm64), torch in image: False
+unlimited: peak 881.4 MiB (cgroup), 435.7 MiB (stats), idle 285.6 MiB, healthy after 1.7 s, ok=True
+512m limit: ok=True, oom_killed=False, peak 496.0 MiB
+fits 512 MB: True

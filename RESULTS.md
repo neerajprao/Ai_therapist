@@ -201,7 +201,14 @@ Still weak: the model referenced a relevant earlier-session memory in 1 of 4 cas
 
 ## 7. Cloud container footprint
 
-_Not run: `eval/results/cloud_memory.json` does not exist. Docker was not installed on the development machine._
+Image `soulsync-cloud:eval` (linux/arm64): **1502.4 MB**, PyTorch installed: False. Built on arm64 macOS-27.0.1-arm64-arm-64bit, Docker 29.8.2.
+
+| Run | Requests OK | Healthy after | Idle memory | Peak (docker stats) | Peak (cgroup, incl. page cache) | OOM-killed |
+|---|---|---|---|---|---|---|
+| No limit | 6/6 | 1.7 s | 285.6 MiB | 435.7 MiB | 881.4 MiB | False |
+| --memory=512m | 6/6 | 1.7 s | 260.2 MiB | 469.7 MiB | 496.0 MiB | False |
+
+Fits a 512 MB limit in this test: **True**. In this run the 512 MB limit was never reached. Peak memory is cgroup memory.peak (includes page cache) for one container serving one user sequentially, with the knowledge base and memory enabled. Requests use real test clips through Groq. Built for the host architecture; a linux/amd64 host image will differ slightly in size. Source: `cloud_memory.json`.
 
 ## 8. Training time
 

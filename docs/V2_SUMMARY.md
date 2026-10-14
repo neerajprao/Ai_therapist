@@ -51,7 +51,7 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 | 1.10 Silent failures | Typed errors, logging, "Unavailable" shown in the UI |
 | 1.11 Unbounded history | Last `HISTORY_MAX_TURNS` exchanges |
 | 1.12 Personal data in git | Untracked and ignored. **Still present in earlier commits** |
-| 1.13 No tests, eval, Docker, CI, licence | Tests, eval and CI added. MIT licence for code, CC BY-NC-SA 4.0 for weights. Dockerfile written but not built |
+| 1.13 No tests, eval, Docker, CI, licence | Tests, eval, CI and a measured Dockerfile added. MIT licence for code, CC BY-NC-SA 4.0 for weights |
 | 2.1 Keyword override | Removed |
 | 2.2 No crisis handling | Safety layer with tests |
 | 2.3 Train/serve mismatch | One shared preprocessing function |
@@ -65,7 +65,7 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 
 ## What was not done, and why
 
-- **Docker build and memory measurement (Phase 7).** Docker is not installed and you asked to defer it. The Dockerfile and compose file are untested. `eval/results/cloud_memory.json` does not exist.
+- **Deployment to a host.** The Docker image is built and measured locally (see below) but not deployed anywhere yet.
 - **Cloud mode from a real server.** Groq was tested live from the laptop (24 clips, `latency_cloud.json`); `qwen/qwen3.8-27b` returned clean replies with no reasoning text. Not yet run from a deployed container.
 - **Groq free-tier limits.** Their docs page lists Developer-plan limits only.
 - **Original v1 baseline.** The original weights were unavailable, so the baseline is a reproduction. It reaches 61.9% on its own leaky validation split where your notebook reported 82.9%, so it is weaker than the real v1 model and the before/after gap is overstated.
@@ -96,3 +96,11 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 | **Total** | **160.0 (2.67 h of the 4.5 h budget)** |
 
 The benchmark projected 6.8 minutes per epoch for the main run; it took 8.0.
+
+## Cloud container
+
+Measured by `python -m eval.cloud_memory` (see RESULTS.md, section 7). The cloud image has no PyTorch and served real Groq-backed requests under a 512 MB memory cap without being killed, though with little headroom: the INT8 emotion model alone takes about 250 MB of RAM once loaded.
+
+- **Fixed while measuring:** the embedding model was cached for `root` at build time but read by the `app` user, so each container start downloaded 79 MB. Fixing it cut startup from 27 s to 1.7 s. A `chown` layer that duplicated the model was also removed.
+- **One unexplained failure:** in one of four measurement runs, a reply stream was cut off mid-response. It did not recur in the next two full runs, and the cause was not found. Possible causes include a transient Groq error or the memory cap; the measurement script now records failed requests and container state, so a repeat would be diagnosable.
+- **Ways to cut memory further, if a host needs it:** load the emotion model lazily or run it with a smaller ONNX session arena; drop the unused `kubernetes` package that `chromadb` pulls in (about 125 MB of image); delete the cached `onnx.tar.gz` after extraction (about 80 MB of image).

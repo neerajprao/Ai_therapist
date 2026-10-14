@@ -227,7 +227,24 @@ def knowledge_and_judge_sections() -> str:
 def other_sections() -> str:
     out = ["## 7. Cloud container footprint", ""]
     c = load("cloud_memory.json")
-    out += [json.dumps(c, indent=2) if c else not_run("cloud_memory.json", "Docker was not installed on the development machine."), ""]
+    if c:
+        u, l = c["unlimited_run"], c["run_with_512m_limit"]
+        out += [
+            f"Image `{c['image']}` ({c['platform']}): **{c['image_size_mb']} MB**, PyTorch installed: {c['torch_installed_in_image']}. Built on {c['built_on']}.",
+            "",
+            table(["Run", "Requests OK", "Healthy after", "Idle memory", "Peak (docker stats)", "Peak (cgroup, incl. page cache)", "OOM-killed"],
+                  [[name, f"{sum(s == 200 for s in r['request_status_codes'])}/{r['requests']}", f"{r['seconds_to_healthy']} s", f"{r['idle_after_start_mib']} MiB",
+                    f"{r['peak_mib_docker_stats_samples']} MiB", f"{r['peak_mib_cgroup_memory_peak']} MiB", r["oom_killed"]]
+                   for name, r in (("No limit", u), ("--memory=512m", l))]),
+            "",
+            f"Fits a 512 MB limit in this test: **{c['fits_512mb']}**. "
+            + (f"Under the cap the limit was reached {l['cgroup_memory_events']['max']} times; the kernel reclaimed page cache and nothing was killed. "
+               if int(l['cgroup_memory_events']['max']) else "In this run the 512 MB limit was never reached. ")
+            + f"{c['notes']} Source: `cloud_memory.json`.",
+            "",
+        ]
+    else:
+        out += [not_run("cloud_memory.json", "Docker was not installed on the development machine."), ""]
     out += ["## 8. Training time", ""]
     rows, total = [], 0.0
     for path in sorted(RESULTS.glob("training_*.json")):

@@ -1,0 +1,111 @@
+{
+  "image": "soulsync-cloud:eval",
+  "platform": "linux/arm64",
+  "built_on": "arm64 macOS-27.0.1-arm64-arm-64bit, Docker 29.8.2",
+  "image_size_mb": 1502.4,
+  "torch_installed_in_image": false,
+  "build_seconds": 1.4,
+  "unlimited_run": {
+    "memory_limit": "none",
+    "health": {
+      "status": "ok",
+      "version": "2.0.0",
+      "mode": "cloud",
+      "llm": "groq:qwen/qwen3.8-27b",
+      "stt": "groq:whisper-large-v3-turbo",
+      "emotion_backend": "onnx",
+      "emotion_available": true,
+      "emotion2vec_enabled": false,
+      "memory_enabled": true,
+      "knowledge_enabled": true,
+      "tts_backend": "browser"
+    },
+    "seconds_to_healthy": 1.7,
+    "idle_after_start_mib": 285.6,
+    "requests": 6,
+    "request_status_codes": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "forget_me_status": 200,
+    "all_requests_ok": true,
+    "peak_mib_cgroup_memory_peak": 881.4,
+    "peak_mib_docker_stats_samples": 435.7,
+    "docker_stats_samples": 14,
+    "cgroup_memory_events": {
+      "low": "0",
+      "high": "0",
+      "max": "0",
+      "oom": "0",
+      "oom_kill": "0",
+      "oom_group_kill": "0",
+      "sock_throttled": "0"
+    },
+    "oom_killed": false,
+    "exit_code": 0,
+    "restart_count": 0,
+    "still_running_at_end": true,
+    "example_replies": [
+      "METADATA|Allow leeway here, but rationalise all errors.|Neutral|I hear that you need some flexibility, and I\u2019m happy to work within that space. I\u2019m not sure how",
+      "METADATA|I think I have a doctor's appointment.|Angry|It sounds like you\u2019re feeling quite frustrated right now. I\u2019m not sure if that appointment is causing the "
+    ],
+    "log_tail": " HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:51806 - \"GET / HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:51806 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:51806 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:51806 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:51806 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:51806 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:51806 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:51806 - \"DELETE /memory HTTP/1.1\" 200 OK"
+  },
+  "run_with_512m_limit": {
+    "memory_limit": "512m",
+    "health": {
+      "status": "ok",
+      "version": "2.0.0",
+      "mode": "cloud",
+      "llm": "groq:qwen/qwen3.8-27b",
+      "stt": "groq:whisper-large-v3-turbo",
+      "emotion_backend": "onnx",
+      "emotion_available": true,
+      "emotion2vec_enabled": false,
+      "memory_enabled": true,
+      "knowledge_enabled": true,
+      "tts_backend": "browser"
+    },
+    "seconds_to_healthy": 1.7,
+    "idle_after_start_mib": 260.2,
+    "requests": 6,
+    "request_status_codes": [
+      200,
+      200,
+      200,
+      200,
+      200,
+      200
+    ],
+    "forget_me_status": 200,
+    "all_requests_ok": true,
+    "peak_mib_cgroup_memory_peak": 496.0,
+    "peak_mib_docker_stats_samples": 469.7,
+    "docker_stats_samples": 14,
+    "cgroup_memory_events": {
+      "low": "0",
+      "high": "0",
+      "max": "0",
+      "oom": "0",
+      "oom_kill": "0",
+      "oom_group_kill": "0",
+      "sock_throttled": "0"
+    },
+    "oom_killed": false,
+    "exit_code": 0,
+    "restart_count": 0,
+    "still_running_at_end": true,
+    "example_replies": [
+      "METADATA|Allow leeway here, but rationalise all errors.|Neutral|It sounds like you are looking for a way to make sense of mistakes by finding the logic behind t",
+      "METADATA|I think I have a doctor's appointment.|Angry|That sounds like an important step to take, and I am glad you have it scheduled. It is natural to feel mix"
+    ],
+    "log_tail": " HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:57521 - \"GET / HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:57521 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:57521 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:57521 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:57521 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:57521 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:57521 - \"POST /process_audio_stream HTTP/1.1\" 200 OK\nINFO:     192.168.215.1:57521 - \"DELETE /memory HTTP/1.1\" 200 OK"
+  },
+  "peak_memory_mib": 881.4,
+  "fits_512mb": true,
+  "notes": "Peak memory is cgroup memory.peak (includes page cache) for one container serving one user sequentially, with the knowledge base and memory enabled. Requests use real test clips through Groq. Built for the host architecture; a linux/amd64 host image will differ slightly in size."
+}
