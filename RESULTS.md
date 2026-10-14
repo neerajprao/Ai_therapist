@@ -121,14 +121,14 @@ LLM `ollama:qwen2.5:7b-instruct`, STT `openai-whisper:base`, emotion backend `to
 
 | Stage | p50 (ms) | p95 (ms) |
 |---|---|---|
-| Audio decode | 11.4 | 30.1 |
-| Emotion | 175.8 | 225.9 |
-| Speech-to-text | 170.0 | 224.5 |
-| Memory retrieval | 63.6 | 67.3 |
-| LLM time to first token | 231.7 | 485.2 |
-| LLM full reply | 1167.2 | 1735.0 |
-| Upload to first reply token | 654.5 | 928.1 |
-| Total | 1595.2 | 2181.5 |
+| Audio decode | 10.6 | 29.2 |
+| Emotion | 188.7 | 238.2 |
+| Speech-to-text | 178.5 | 244.9 |
+| Memory retrieval | 126.7 | 142.8 |
+| LLM time to first token | 222.2 | 886.6 |
+| LLM full reply | 1225.2 | 1656.5 |
+| Upload to first reply token | 723.9 | 1406.1 |
+| Total | 1736.0 | 2191.4 |
 
 One warm-up request excluded. Sequential requests, single user. No text-to-speech stage: the browser speaks the reply. Machine: arm64 macOS-27.0.1-arm64-arm-64bit. Source: `latency_local.json`.
 
@@ -136,8 +136,8 @@ Local Whisper engines, same clips:
 
 | Engine | Model | p50 (ms) | p95 (ms) |
 |---|---|---|---|
-| faster-whisper | base | 297.3 | 313.9 |
-| openai-whisper | base | 151.9 | 167.7 |
+| faster-whisper | base | 298.4 | 313.6 |
+| openai-whisper | base | 164.8 | 188.3 |
 
 ### Local mode with Emotion2Vec switched off
 
@@ -162,18 +162,18 @@ LLM `groq:qwen/qwen3.8-27b`, STT `groq:whisper-large-v3-turbo`, emotion backend 
 
 | Stage | p50 (ms) | p95 (ms) |
 |---|---|---|
-| Audio decode | 10.5 | 29.2 |
-| Emotion | 89.0 | 146.5 |
-| Speech-to-text | 241.5 | 430.0 |
-| Memory retrieval | 88.8 | 92.2 |
-| LLM time to first token | 113.1 | 171.7 |
-| LLM full reply | 191.1 | 246.8 |
-| Upload to first reply token | 553.5 | 745.3 |
-| Total | 645.5 | 822.9 |
+| Audio decode | 11.3 | 26.5 |
+| Emotion | 88.6 | 154.9 |
+| Speech-to-text | 249.6 | 404.2 |
+| Memory retrieval | 147.4 | 152.8 |
+| LLM time to first token | 109.2 | 140.5 |
+| LLM full reply | 193.0 | 241.7 |
+| Upload to first reply token | 620.0 | 776.3 |
+| Total | 705.4 | 856.6 |
 
 One warm-up request excluded. Sequential requests, single user. No text-to-speech stage: the browser speaks the reply. Machine: arm64 macOS-27.0.1-arm64-arm-64bit. Source: `latency_cloud.json`.
 
-## 5. Coping-skills knowledge base (off by default)
+## 5. Coping-skills knowledge base
 
 10 short notes, same embedding model as memory. Threshold swept on half the messages; chosen `KNOWLEDGE_MAX_DISTANCE=0.75`.
 

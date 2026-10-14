@@ -2,8 +2,8 @@
 
 A separate ChromaDB collection from user memories, filled from
 `coping_notes.json` on start-up. Retrieval uses the same cosine-distance
-threshold idea as memory. Off unless KNOWLEDGE_ENABLED=true; the notes must be
-reviewed by the project owner before switching it on.
+threshold idea as memory. The notes were
+reviewed by the project owner (done 2026-10-14). On by default; KNOWLEDGE_ENABLED=false turns it off.
 """
 
 from __future__ import annotations

@@ -15,7 +15,7 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 - **Evaluation:** scripts for emotion, ensemble, ONNX, memory and latency; `RESULTS.md`, the model card, the README table and the resume bullets are generated from their JSON output.
 - **Weights published:** https://huggingface.co/npr1138/soulsync-emotion-wav2vec2 (PyTorch + INT8 ONNX, CC BY-NC-SA 4.0).
 - **Record:** `training/SoulSync_training_and_eval.ipynb` holds every epoch, metric and confusion matrix with saved outputs.
-- **Knowledge base:** ten draft coping-skill notes in a separate collection, threshold tuned by `eval/knowledge_eval.py`, off by default until you review the text.
+- **Knowledge base:** ten coping-skill notes, reviewed by you, in a separate collection; threshold tuned by `eval/knowledge_eval.py`; on by default.
 - **Rate limiting:** 12 recordings per user per minute by default.
 - **Reply quality:** automated LLM-as-judge plus keyword rule checks over 20 scripted conversations. The first run exposed a missed indirect crisis phrasing and missing medication referrals, both now fixed.
 - **Licences:** checked against each corpus's source page. TESS is CC BY-NC 4.0 (earlier docs said BY-NC-ND). SAVEE forbids redistribution, so the Kaggle copy is itself a redistribution.
@@ -71,10 +71,8 @@ Written 2026-10-14. Numbers quoted here are copied from [RESULTS.md](../RESULTS.
 - **Original v1 baseline.** The original weights were unavailable, so the baseline is a reproduction. It reaches 61.9% on its own leaky validation split where your notebook reported 82.9%, so it is weaker than the real v1 model and the before/after gap is overstated.
 - **`wav2vec2-base` versus `wav2vec2-base-960h` comparison. Attempted and failed.** With the main recipe the 960h model's loss became NaN within the first 100 steps. I stopped it after 4.1 minutes rather than retune it, because a different learning rate would no longer be a like-for-like comparison. Recorded in `eval/results/training_base960h.json`.
 - **Git history purge.** Not done; it needs a force-push, which is your decision. Conversation logs and recordings remain recoverable from earlier commits on GitHub.
-- **Knowledge base switched on.** The notes are a draft in my own words and need your review before `KNOWLEDGE_ENABLED=true`.
 - **Memories in replies.** Retrieval injects the right memory, but the 7B model mentions it in only 1 of 4 judged cases. Not fixed.
 - **A trustworthy reply-quality score.** The judge is the same model as the reply writer and gives near-ceiling scores; only the rule checks are informative.
-- **Browser check.** The server was tested with real models through `curl`. The microphone, live text rendering and browser speech have not been tried in a browser.
 - **Git history.** Purged and force-pushed. GitHub still serves the old commits by commit ID until GitHub Support removes them.
 
 ## Things to know before quoting results

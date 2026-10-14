@@ -66,6 +66,11 @@ def main() -> None:
     cases = json.loads((ROOT / "eval" / "data" / "memory_cases.json").read_text())
     for m in cases["users"]["meera"]:
         memory.add("bench", m["session"], m["text"])
+    knowledge = None
+    if settings.knowledge_enabled:
+        from soulsync.knowledge import KnowledgeBase, format_notes
+
+        knowledge = KnowledgeBase(None, settings.knowledge_max_distance)
 
     def run(raw: bytes, name: str) -> dict:
         t = {}
@@ -80,9 +85,11 @@ def main() -> None:
         t["stt"] = time.perf_counter() - t1
         t1 = time.perf_counter()
         found = memory.search("bench", "now", text) if text.strip() else []
+        notes = knowledge.search(text) if knowledge is not None and text.strip() else []
         t["retrieval"] = time.perf_counter() - t1
         messages = build_messages([], tag_user_message(text or "(silence)", emotion.display),
-                                  format_memories(found) if found else None, settings.history_max_turns)
+                                  format_memories(found) if found else None, settings.history_max_turns,
+                                  format_notes(notes) if notes else None)
         t1 = time.perf_counter()
         first = None
         chars = 0
@@ -119,6 +126,7 @@ def main() -> None:
         "stages": {s: pct([r[s] * 1000 for r in records]) for s in stages},
         "mean_reply_chars": round(float(np.mean([r["reply_chars"] for r in records])), 1),
         "pace_seconds_between_clips": args.pace,
+        "knowledge_base_enabled": knowledge is not None,
         "notes": "One warm-up request excluded. Sequential requests, single user. "
         "No text-to-speech stage: the browser speaks the reply.",
     }

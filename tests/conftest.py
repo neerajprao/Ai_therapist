@@ -104,6 +104,14 @@ def settings(tmp_path):
     return load_settings({"MODE": "local", "DATA_DIR": str(tmp_path), "SECRET_KEY": "test-secret"})
 
 
+@pytest.fixture(autouse=True)
+def _no_real_knowledge_base(monkeypatch):
+    """create_app would build the real knowledge base (MiniLM download); API tests use none."""
+    import soulsync.knowledge
+
+    monkeypatch.setattr(soulsync.knowledge, "build_knowledge", lambda settings: None)
+
+
 @pytest.fixture
 def memory():
     store = MemoryStore(None, top_k=3, max_distance=0.6, embedding_function=HashEmbedding())

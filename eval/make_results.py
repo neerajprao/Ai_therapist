@@ -180,7 +180,7 @@ def latency_section() -> str:
 
 
 def knowledge_and_judge_sections() -> str:
-    out = ["## 5. Coping-skills knowledge base (off by default)", ""]
+    out = ["## 5. Coping-skills knowledge base", ""]
     k = load("knowledge_eval.json")
     if k:
         t = k["test"]

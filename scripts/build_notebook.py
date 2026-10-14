@@ -255,7 +255,7 @@ for mode in ("local", "local_w2v_only", "cloud"):
     if "local_stt_comparison" in lat:
         display(Markdown("**Local Whisper engines compared**")); display(pd.DataFrame(lat["local_stt_comparison"]).T)
     print(lat["notes"]); raw(lat)"""),
-    md("""## 9. Coping-skills knowledge base (off by default; notes pending review)
+    md("""## 9. Coping-skills knowledge base (notes reviewed; on by default)
 
 Script: `python -m eval.knowledge_eval`. Cases in `eval/data/knowledge_cases.json`."""),
     code("""run("eval.knowledge_eval", RERUN_EVAL)

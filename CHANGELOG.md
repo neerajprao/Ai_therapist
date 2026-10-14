@@ -23,7 +23,7 @@ Measured results for this version are in [RESULTS.md](RESULTS.md). The issues it
 - Long-term memory on ChromaDB: per-user filtering, current-session exclusion, a distance threshold, and a "Forget me" button backed by `DELETE /memory`.
 - Persistent user identity: a signed, HTTP-only, one-year cookie. Each page load still starts a new session.
 - Crisis-language safety layer that bypasses the LLM and returns helpline information, plus a fixed doctor-referral line for medication and diagnosis questions.
-- Optional coping-skills knowledge base (draft notes pending review; off by default).
+- Coping-skills knowledge base of ten reviewed general-wellbeing notes (on by default; `KNOWLEDGE_ENABLED=false` turns it off).
 - Per-user rate limit on recordings.
 - Automated reply-quality evaluation (LLM-as-judge plus keyword rule checks).
 - Disclaimer in the UI and a per-mode statement of what data is stored and what leaves the device.

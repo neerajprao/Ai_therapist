@@ -12,7 +12,7 @@ def kb(max_distance=0.9):
 
 def test_notes_file_is_marked_and_complete():
     data = json.loads(NOTES_FILE.read_text())
-    assert "not medical advice" in data["status"]
+    assert "not medical advice" in data["status"] and "Reviewed" in data["status"]
     assert len(data["notes"]) >= 8
     assert all({"id", "title", "tags", "text"} <= set(n) for n in data["notes"])
 
@@ -37,5 +37,8 @@ def test_knowledge_note_is_temporary_and_before_user_message():
     assert msgs[1]["content"] == "TIP"
 
 
-def test_knowledge_is_off_by_default(settings):
-    assert settings.knowledge_enabled is False
+def test_knowledge_is_on_by_default_and_can_be_disabled(settings, tmp_path):
+    from soulsync.config import load_settings
+
+    assert settings.knowledge_enabled is True
+    assert load_settings({"DATA_DIR": str(tmp_path), "KNOWLEDGE_ENABLED": "false"}).knowledge_enabled is False

@@ -8,55 +8,56 @@
   "machine": "arm64 macOS-27.0.1-arm64-arm-64bit",
   "stages": {
     "decode": {
-      "p50_ms": 10.5,
-      "p95_ms": 29.2,
-      "mean_ms": 13.5,
+      "p50_ms": 11.3,
+      "p95_ms": 26.5,
+      "mean_ms": 13.2,
       "n": 24
     },
     "emotion": {
-      "p50_ms": 89.0,
-      "p95_ms": 146.5,
-      "mean_ms": 86.9,
+      "p50_ms": 88.6,
+      "p95_ms": 154.9,
+      "mean_ms": 87.4,
       "n": 24
     },
     "stt": {
-      "p50_ms": 241.5,
-      "p95_ms": 430.0,
-      "mean_ms": 280.8,
+      "p50_ms": 249.6,
+      "p95_ms": 404.2,
+      "mean_ms": 281.7,
       "n": 24
     },
     "retrieval": {
-      "p50_ms": 88.8,
-      "p95_ms": 92.2,
-      "mean_ms": 88.7,
+      "p50_ms": 147.4,
+      "p95_ms": 152.8,
+      "mean_ms": 146.8,
       "n": 24
     },
     "llm_first_token": {
-      "p50_ms": 113.1,
-      "p95_ms": 171.7,
-      "mean_ms": 124.5,
+      "p50_ms": 109.2,
+      "p95_ms": 140.5,
+      "mean_ms": 115.2,
       "n": 24
     },
     "llm_total": {
-      "p50_ms": 191.1,
-      "p95_ms": 246.8,
-      "mean_ms": 203.1,
+      "p50_ms": 193.0,
+      "p95_ms": 241.7,
+      "mean_ms": 199.5,
       "n": 24
     },
     "time_to_first_token_end_to_end": {
-      "p50_ms": 553.5,
-      "p95_ms": 745.3,
-      "mean_ms": 594.5,
+      "p50_ms": 620.0,
+      "p95_ms": 776.3,
+      "mean_ms": 644.2,
       "n": 24
     },
     "total": {
-      "p50_ms": 645.5,
-      "p95_ms": 822.9,
-      "mean_ms": 673.0,
+      "p50_ms": 705.4,
+      "p95_ms": 856.6,
+      "mean_ms": 728.5,
       "n": 24
     }
   },
-  "mean_reply_chars": 186.2,
+  "mean_reply_chars": 200.4,
   "pace_seconds_between_clips": 3.5,
+  "knowledge_base_enabled": true,
   "notes": "One warm-up request excluded. Sequential requests, single user. No text-to-speech stage: the browser speaks the reply."
 }

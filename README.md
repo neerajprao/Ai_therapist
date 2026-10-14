@@ -32,7 +32,7 @@ flowchart LR
 - **Long-term memory (RAG).** User messages are embedded with all-MiniLM-L6-v2 and stored in ChromaDB. Retrieval is filtered to the same user, excludes the current session, and drops anything beyond a tuned cosine-distance threshold.
 - **Forget me.** One button deletes everything stored for that browser's user.
 - **Safety layer.** Crisis and self-harm phrasing bypasses the LLM and returns a fixed message that suggests helplines. Questions about medication or diagnosis get a fixed "talk to your doctor" line appended. The app never places calls or contacts anyone.
-- **Coping-skills knowledge base (optional, off by default).** Ten short general-wellbeing notes (breathing, grounding, sleep and similar) in a separate ChromaDB collection, offered as gentle suggestions and labelled as general information, not medical advice.
+- **Coping-skills knowledge base.** Ten short, reviewed general-wellbeing notes (breathing, grounding, sleep and similar) in a separate ChromaDB collection, offered as gentle suggestions and labelled as general information, not medical advice.
 - **Rate limiting.** Each user can send a limited number of recordings per minute.
 - **Two modes from one codebase**, selected by environment variables: local (nothing leaves the machine) and cloud (Groq for LLM and speech-to-text).
 - **Reproducible evaluation.** Every number below is produced by a script and stored as JSON in `eval/results/`.
@@ -48,8 +48,8 @@ flowchart LR
 | Ensemble with Emotion2Vec (Wav2Vec2 weight 0.4) | 89.5% accuracy, 89.5% macro-F1; see caveat | `emotion_ensemble.json` |
 | ONNX INT8 vs PyTorch | 378.3 MB to 122.1 MB (67.7% smaller); CPU p50 70.2 ms to 65.5 ms; macro-F1 +0.4 points | `onnx_benchmark.json` |
 | Memory retrieval, held-out half | Hit@3 81.0%, false recall 0.0%, 0 cross-user leaks | `memory_eval.json` |
-| Local latency, upload to first reply token | p50 0.65 s, p95 0.93 s over 24 clips | `latency_local.json` |
-| Cloud latency (Groq), upload to first reply token | p50 0.55 s, p95 0.75 s over 24 clips, measured from a laptop | `latency_cloud.json` |
+| Local latency, upload to first reply token | p50 0.72 s, p95 1.41 s over 24 clips | `latency_local.json` |
+| Cloud latency (Groq), upload to first reply token | p50 0.62 s, p95 0.78 s over 24 clips, measured from a laptop | `latency_cloud.json` |
 | Tests | 123 pytest cases, no model downloads | `tests/` |
 
 Caveats that matter: the emotion data is acted English speech; the v1 baseline is a reproduction of the old recipe, not the original weights; Emotion2Vec's training data probably overlaps the test corpora, so the ensemble figure is optimistic; the memory test set is small and synthetic.
@@ -144,7 +144,6 @@ The tests use fake models and need no downloads. GitHub Actions runs them on eve
 - Human-rated reply quality, or a stronger, independent judge model.
 - A larger, independently written memory test set.
 - Get the reply model to use recalled memories more reliably (prompting or a larger model).
-- Review the coping-skills notes and enable the knowledge base.
 
 ## Credits and licences
 
