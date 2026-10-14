@@ -1,0 +1,66 @@
+{
+  "run": "base960h",
+  "status": "failed",
+  "reason": "Loss became NaN within the first 100 steps with the main recipe (lr 5e-5, batch 16, 10% warm-up). Stopped by hand. A 30-step diagnostic at lr 5e-6 stayed finite but the gradient norm was rising; not investigated further to save budget. Comparison with wav2vec2-base not completed.",
+  "config": {
+    "run_name": "base960h",
+    "split": "split_v2.csv",
+    "base_model": "facebook/wav2vec2-base-960h",
+    "exclude_corpus": "",
+    "epochs": 15,
+    "batch_size": 16,
+    "accum": 1,
+    "lr": 5e-05,
+    "weight_decay": 0.01,
+    "warmup_frac": 0.1,
+    "patience": 3,
+    "select": "macro_f1",
+    "no_random_crop": false,
+    "no_class_weights": false,
+    "seed": 42,
+    "max_minutes": 100.0,
+    "bench_steps": 0,
+    "resume": false,
+    "device": "mps",
+    "train_clips": 7635,
+    "val_clips": 878,
+    "class_counts": {
+      "happy": 1563,
+      "sad": 1565,
+      "angry": 1564,
+      "neutral": 1379,
+      "anxious": 1564
+    },
+    "class_weights": [
+      0.977,
+      0.9757,
+      0.9763,
+      1.1073,
+      0.9763
+    ],
+    "trainable_params": 90369413,
+    "steps_per_epoch": 477,
+    "torch": "2.14.1"
+  },
+  "epochs_completed": 0,
+  "best_epoch": 0,
+  "logged_steps": [
+    {
+      "epoch": 1,
+      "step": 100,
+      "of": 477,
+      "loss": "nan"
+    },
+    {
+      "epoch": 1,
+      "step": 200,
+      "of": 477,
+      "loss": "nan"
+    }
+  ],
+  "train_seconds": 248.0,
+  "train_minutes": 4.13,
+  "history": [],
+  "minutes_from_log_file_times": 3.63,
+  "extra_diagnostic_minutes": 0.5
+}

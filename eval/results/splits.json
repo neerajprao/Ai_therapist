@@ -1,0 +1,147 @@
+{
+  "seed": 42,
+  "duplicates": {
+    "dropped_conflicting_label_duplicates": 4,
+    "dropped_exact_duplicates": 1
+  },
+  "excluded_ravdess_song_clips": 828,
+  "split_v2": {
+    "train": {
+      "clips": 7635,
+      "speakers": 93,
+      "by_label": {
+        "angry": 1564,
+        "anxious": 1564,
+        "happy": 1563,
+        "neutral": 1379,
+        "sad": 1565
+      },
+      "by_corpus": {
+        "CREMA-D": 4808,
+        "RAVDESS": 647,
+        "SAVEE": 180,
+        "TESS": 2000
+      }
+    },
+    "val": {
+      "clips": 878,
+      "speakers": 14,
+      "by_label": {
+        "angry": 179,
+        "anxious": 179,
+        "happy": 179,
+        "neutral": 162,
+        "sad": 179
+      },
+      "by_corpus": {
+        "CREMA-D": 680,
+        "RAVDESS": 108,
+        "SAVEE": 90
+      }
+    },
+    "test": {
+      "clips": 877,
+      "speakers": 14,
+      "by_label": {
+        "angry": 179,
+        "anxious": 179,
+        "happy": 179,
+        "neutral": 161,
+        "sad": 179
+      },
+      "by_corpus": {
+        "CREMA-D": 679,
+        "RAVDESS": 108,
+        "SAVEE": 90
+      }
+    },
+    "speaker_overlap": {
+      "train_val": 0,
+      "train_test": 0,
+      "val_test": 0
+    },
+    "held_out_speakers": {
+      "val": [
+        "crema_1020",
+        "crema_1046",
+        "crema_1048",
+        "crema_1052",
+        "crema_1056",
+        "crema_1057",
+        "crema_1060",
+        "crema_1063",
+        "crema_1068",
+        "crema_1071",
+        "ravdess_02",
+        "ravdess_04",
+        "ravdess_05",
+        "savee_in_Sad"
+      ],
+      "test": [
+        "crema_1002",
+        "crema_1011",
+        "crema_1016",
+        "crema_1027",
+        "crema_1033",
+        "crema_1041",
+        "crema_1043",
+        "crema_1059",
+        "crema_1067",
+        "crema_1074",
+        "ravdess_01",
+        "ravdess_20",
+        "ravdess_23",
+        "savee_in_Angry"
+      ]
+    }
+  },
+  "split_v1_repro": {
+    "train": {
+      "clips": 1007,
+      "speakers": 18,
+      "by_label": {
+        "angry": 224,
+        "anxious": 224,
+        "happy": 223,
+        "neutral": 112,
+        "sad": 224
+      },
+      "by_corpus": {
+        "RAVDESS": 1007
+      }
+    },
+    "val": {
+      "clips": 252,
+      "speakers": 18,
+      "by_label": {
+        "angry": 56,
+        "anxious": 56,
+        "happy": 56,
+        "neutral": 28,
+        "sad": 56
+      },
+      "by_corpus": {
+        "RAVDESS": 252
+      }
+    },
+    "test": {
+      "clips": 877,
+      "speakers": 14,
+      "by_label": {
+        "angry": 179,
+        "anxious": 179,
+        "happy": 179,
+        "neutral": 161,
+        "sad": 179
+      },
+      "by_corpus": {
+        "CREMA-D": 679,
+        "RAVDESS": 108,
+        "SAVEE": 90
+      }
+    },
+    "note": "train/val are split by FILE over the same RAVDESS speakers (as in the v1 notebook), so its val score is leaky by design; test is the v2 speaker-independent test set.",
+    "test_identical_to_v2": true,
+    "train_speakers_in_v2_test": 0
+  }
+}

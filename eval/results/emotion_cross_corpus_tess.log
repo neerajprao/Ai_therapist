@@ -1,0 +1,9 @@
+cross_corpus_tess: all TESS clips, n=2000, speakers=2
+accuracy 0.606 CI95 [0.585, 0.627]
+macro-F1 0.5343 CI95 [0.5175, 0.5517]
+  happy    P 0.864 R 0.333 F1 0.480 n=400
+  sad      P 0.449 R 0.985 F1 0.617 n=400
+  angry    P 0.584 R 0.993 F1 0.735 n=400
+  neutral  P 1.000 R 0.003 F1 0.005 n=400
+  anxious  P 0.997 R 0.718 F1 0.834 n=400
+by corpus: {'TESS': {'n': 2000, 'accuracy': 0.606}}

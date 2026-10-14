@@ -1,0 +1,5 @@
+*
+!requirements-cloud.txt
+!soulsync/**
+!models/emotion_w2v2_int8.onnx
+**/__pycache__
